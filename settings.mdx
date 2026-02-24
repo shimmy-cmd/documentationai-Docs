@@ -1,0 +1,136 @@
+---
+title: Configuring Shomri Settings
+description: Adjust your Shomri preferences to fit your needs, from filter strictness to accountability options.
+---
+
+## Overview
+
+Configure Shomri settings through the dashboard or directly in the app to tailor protection levels, assign management roles, set up notifications, and access support. Access settings at `https://dashboard.shomri.com/settings` after logging in.
+
+<Callout kind="info">
+Review your current settings before making changes to avoid disrupting active protections.
+</Callout>
+
+## Modifying Protection Categories
+
+Adjust filter strictness for categories like social media, video content, and apps. Use the slider controls to set levels from `Light` to `Strict`.
+
+<Tabs>
+  <Tab title="Dashboard" icon="monitor">
+    <Steps>
+      <Step title="Navigate to Protection" icon="shield">
+        Click **Protection** in the left sidebar.
+      </Step>
+      <Step title="Select Category" icon="settings">
+        Choose a category like `Social Media` or `Video`.
+      </Step>
+      <Step title="Adjust Level" icon="sliders">
+        Move the slider and save changes.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="iOS App" icon="apple">
+    <Steps>
+      <Step title="Open Settings" icon="settings">
+        Tap the profile icon, then **Settings**.
+      </Step>
+      <Step title="Edit Filters" icon="filter">
+        Select **Filters** and toggle categories.
+      </Step>
+      <Step title="Apply Changes" icon="check">
+        Confirm with your passcode.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Setting Up Management Roles
+
+Assign roles such as `Parent`, `Mentor`, or `Self` to control device management. Each role has specific permissions for approvals and overrides.
+
+<Columns cols={2}>
+  <Card title="Parent Role" icon="users" horizontal>
+    Full access to all devices and settings.
+  </Card>
+  <Card title="Mentor Role" icon="shield">
+    Approve requests but cannot change core filters.
+  </Card>
+  <Card title="Self Role" icon="user">
+    Manage personal device with accountability reporting.
+  </Card>
+</Columns>
+
+To assign a role:
+
+<Expandable title="Advanced Role Permissions" default-open="false">
+Use the dashboard to define custom permissions:
+
+```json
+{
+  "roles": {
+    "parent": {
+      "permissions": ["full_access", "override_blocks"]
+    },
+    "mentor": {
+      "permissions": ["approve_requests", "view_reports"]
+    }
+  }
+}
+```
+
+Upload this JSON via **Account > Roles**.
+</Expandable>
+
+## Configuring Notifications and Approvals
+
+Set up real-time notifications for block attempts and approval requests. Choose delivery via push, email, or SMS.
+
+<ParamField path="notification.level" param-type="string" required="true">
+  Set to `"high"`, `"medium"`, or `"low"` for alert frequency.
+</ParamField>
+
+<ParamField path="approval.method" param-type="string">
+  Options: `"immediate"`, `"batch"`, or `"none"`.
+</ParamField>
+
+<Callout kind="tip">
+Enable `batch` approvals to handle multiple requests efficiently during busy times.
+</Callout>
+
+## Integrating Support Chat Access
+
+Access 24/6 support directly from settings. No codes needed—chat opens instantly.
+
+<Steps>
+  <Step title="Enable Chat" icon="message-circle">
+    Go to **Support** in settings and toggle **Live Chat**.
+  </Step>
+  <Step title="Connect" icon="phone">
+    Enter your details and start chatting.
+  </Step>
+  <Step title="Share Logs" icon="upload">
+    Optionally share device logs for faster resolution.
+  </Step>
+</Steps>
+
+```javascript
+// Example: Programmatic chat initiation (web SDK)
+import { initShomriChat } from '@shomri/chat-sdk';
+
+initShomriChat({
+  apiKey: 'YOUR_API_KEY',
+  userId: 'user-123'
+});
+```
+
+<Columns cols={3}>
+  <Card title="Quick Start Guide" icon="book-open" href="/quickstart">
+    Begin with basic setup.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/authentication">
+    Secure your account.
+  </Card>
+  <Card title="FAQ" icon="help-circle" href="/faq">
+    Common questions answered.
+  </Card>
+</Columns>
