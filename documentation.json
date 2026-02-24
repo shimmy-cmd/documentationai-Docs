@@ -68,7 +68,8 @@
             "pages": [
               {
                 "group": "Convex",
-                "pages": []
+                "pages": [],
+                "openapi": "api-reference/convex-spec-1771945068335.yaml"
               }
             ]
           }
