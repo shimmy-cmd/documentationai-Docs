@@ -55,7 +55,13 @@
           {
             "group": "Endpoints",
             "openapi": "api-reference/openapi.yaml",
-            "pages": []
+            "pages": [
+              {
+                "group": "Devices",
+                "pages": [],
+                "openapi": "api-reference/convex_openapi.yaml"
+              }
+            ]
           }
         ]
       },
