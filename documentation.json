@@ -35,6 +35,15 @@
             "icon": "layers",
             "pages": [
               {
+                "group": "Shomri Hub",
+                "pages": [
+                  {
+                    "title": "Apps",
+                    "path": "apps"
+                  }
+                ]
+              },
+              {
                 "title": "Features",
                 "path": "features",
                 "icon": "file-text"
@@ -44,7 +53,8 @@
                 "path": "settings",
                 "icon": "settings"
               }
-            ]
+            ],
+            "openapi": "api-reference/openapi.yaml"
           }
         ]
       },
@@ -57,8 +67,9 @@
             "openapi": "api-reference/openapi.yaml",
             "pages": [
               {
-                "group": "Devices",
-                "pages": []
+                "group": "Convex",
+                "pages": [],
+                "openapi": "api-reference/convex-spec-1771945068335.yaml"
               }
             ]
           }
