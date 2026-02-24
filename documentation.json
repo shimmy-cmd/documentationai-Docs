@@ -58,7 +58,8 @@
             "pages": [
               {
                 "group": "Devices",
-                "pages": []
+                "pages": [],
+                "openapi": "api-reference/convexkk_openapi.yaml"
               }
             ]
           }
