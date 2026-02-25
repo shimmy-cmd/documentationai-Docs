@@ -1,0 +1,45 @@
+---
+title: Shomri Hub
+description: >-
+  Mobile-optimized React frontend for listing device-specific apps via serial,
+  using Convex queries and the useDeviceAllowedApps hook.
+---
+The Shomri Hub is **hosted on its own domain**.
+
+It is loaded inside a **native mobile app WebView** (iOS / Android).
+
+**Mobile-first layout is mandatory**:
+
+- The page must be fully usable on small screens
+
+- No desktop-first assumptions (hover, wide layouts, dense tables)
+
+- Touch-friendly spacing and controls are required
+
+> **Rule:** Any layout or UI change must be validated for mobile WebView usage first.
+
+## Device Identification via URL
+
+### Serial Parameter
+
+The native app navigates to the Shomri Hub with a `serial`**&#x20;query parameter** in the URL:
+
+```html
+https://hub.shomri.com?serial=DEVICE_SERIAL
+```
+
+### Usage
+
+- The `serial` parameter uniquely identifies the device.
+
+- The frontend must:
+
+  1. Read the `serial` from the URL
+
+  2. Pass it **directly** to Convex backend queries
+
+  3. Avoid any client-side interpretation or transformation
+
+> **Rule:** The serial number is a backend concern.\
+> &#x20;The frontend only forwards it.
+

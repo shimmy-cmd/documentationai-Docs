@@ -1,0 +1,84 @@
+---
+title: Overview
+description: >-
+  Authoritative architectural rules governing backend/frontend responsibilities,
+  Convex usage, data flow, type safety, and agent behavior. This document
+  overrides feature-level and implementation documentation.
+---
+### This project consists of:
+
+#### Backend
+
+Convex database with queries, mutations, and actions
+
+#### Frontend
+
+Multiple independently deployed React projects, each hosted on its own domain
+
+### Convex Documentation
+
+Primary reference: <a href="https://docs.convex.dev/llms.txt" target="_blank" rel="noopener noreferrer">https\://docs.convex.dev/llms.txt</a>
+
+This LLM-optimized documentation should be your first stop for any Convex-related questions or implementation details.
+
+### Core Principle: Thin Frontend, Smart Backend
+
+Most business logic must be handled by the backend. The frontend should mainly be responsible for:
+
+- UI state (modals, dropdowns, form inputs, selection states)
+
+- Presentation logic (formatting for display, conditional rendering)
+
+- Calling backend queries, actions, and mutations
+
+
+
+## Reference: <a href="https://docs.convex.dev/client/react.md" target="_blank" rel="noopener noreferrer">https\://docs.convex.dev/client/react.md</a>
+
+### Frontend Guidelines
+
+#### Data Fetching
+
+- Use useQuery, useMutation, and useAction hooks to call Convex functions
+
+- Pass user input directly to Convex functions without processing
+
+- Let the backend handle validation, transformation, and business logic
+
+#### Pagination
+
+- Reference: <a href="https://docs.convex.dev/database/pagination.md" target="_blank" rel="noopener noreferrer">https\://docs.convex.dev/database/pagination.md</a>
+
+- Default to 20 items per page
+
+- NEVER load more than 50 items at a time
+
+### React Patterns to Avoid
+
+- Treat useEffect, useMemo, and data transformations with suspicion
+
+- These often indicate logic that belongs in the backend
+
+- When in doubt, ask Eliezer Jacobs before implementing
+
+#### Data Processing Anti-Patterns
+
+- Iterating over an entire table/array to find an entry is a code smell
+
+- This likely means the frontend is doing work the backend should handle
+
+- The backend can use indexes and queries to fetch data efficiently
+
+### Type Safety
+
+- Convex generates a typed api.ts file listing ALL available endpoints
+
+- Always rely on these generated types
+
+- NEVER use type casting or as assertions with Convex types
+
+- If types don't match, the issue is likely in the backend definition
+
+# Escalation Rule
+
+If any of these guidelines need to be violated, consult with Eliezer Jacobs first.

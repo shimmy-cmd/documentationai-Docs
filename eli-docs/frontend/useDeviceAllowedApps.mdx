@@ -1,0 +1,49 @@
+---
+title: useDeviceAllowedApps Hook
+description: >-
+  Use this hook whenever you need to list all apps that a user is allowed to
+  install. It takes the device's serial and an optional search query which must
+  be >2 characters to trigger search.
+---
+```typescript
+export function useDeviceAllowedApps(serial: string, query?: string) {
+  const {
+    results: internalResults,
+    loadMore,
+    isLoading,
+    status,
+  } = usePaginatedQuery(
+    api.apps.list.allowedByDeviceFilter,
+    { serial, query },
+    { initialNumItems: 20 }
+  );
+
+  const staticAllowed = useQuery(
+    api.apps.list.allowedByDeviceStatic,
+    { serial }
+  );
+
+  const results = useMemo(() => {
+    const staticAllowedToShow =
+      status === "Exhausted"
+        ? staticAllowed
+        : !internalResults.length
+          ? []
+          : staticAllowed.filter(
+              app => app.name < internalResults.at(-1)?.name
+            );
+
+    return [...internalResults, ...staticAllowed].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  }, [internalResults, staticAllowed, status]);
+
+  return {
+    results,
+    loadMore,
+    isLoading,
+    status,
+  };
+}
+```
+

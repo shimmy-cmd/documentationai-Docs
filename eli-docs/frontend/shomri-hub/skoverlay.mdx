@@ -1,0 +1,46 @@
+---
+title: Native SKOverlay Integration
+description: >-
+  Shomri Hub supports opening Apple’s native StoreKit overlay directly from the
+  WebView. This allows users to view and/or purchase apps without leaving the
+  mobile app.
+---
+### Opening the SKOverlay
+
+Use the `window.webkit?.messageHandlers?.showSKOverlay` interface:
+
+```typescript
+function openSKOverlay(trackId: string) {
+  window.webkit?.messageHandlers?.showSKOverlay.postMessage(trackId);
+}
+```
+
+- `trackId`: The Apple App Store track ID of the app to show.
+
+- This call must be triggered from a user action (tap/click) to comply with iOS restrictions.
+
+### Listening for Overlay Dismissal
+
+Shomri Hub can detect when the overlay is dismissed via:
+
+```typescript
+window.onSKOverlayDismissed = () => {
+  console.log("SKOverlay was dismissed");
+  // Optional: trigger UI updates or analytics here
+};
+```
+
+- This callback is invoked by the native app once the overlay closes.
+
+- Use it to resume UI state, refresh app lists, or log user interaction.
+
+### Rules / Best Practices
+
+1. **Do not call SKOverlay automatically** — only on direct user interaction.
+
+2. **Forward all app track IDs from the backend** — the frontend should not hardcode IDs.
+
+3. **Do not block UI** — the overlay runs natively; the page should remain responsive.
+
+4. **Coordinate with pagination** — if opening the overlay affects visible apps, ensure the list state is preserved.
+
