@@ -9,124 +9,130 @@
     }
   },
   "navigation": {
-    "tabs": [
+    "products": [
       {
-        "tab": "Documentation",
-        "icon": "book",
-        "groups": [
+        "product": "Shomri Hub",
+        "tabs": [
           {
-            "group": "Getting Started",
-            "icon": "rocket",
-            "pages": [
+            "tab": "Documentation",
+            "icon": "book",
+            "groups": [
               {
-                "title": "Introduction",
-                "path": "introduction",
-                "icon": "home"
-              },
-              {
-                "title": "Quickstart",
-                "path": "quickstart",
-                "icon": "zap"
-              }
-            ]
-          },
-          {
-            "group": "Core Concepts",
-            "icon": "layers",
-            "pages": [
-              {
-                "group": "Shomri Hub",
+                "group": "Getting Started",
+                "icon": "rocket",
                 "pages": [
                   {
-                    "title": "Apps",
-                    "path": "apps"
+                    "title": "Introduction",
+                    "path": "introduction",
+                    "icon": "home"
+                  },
+                  {
+                    "title": "Quickstart",
+                    "path": "quickstart",
+                    "icon": "zap"
                   }
                 ]
               },
               {
-                "title": "Features",
-                "path": "features",
-                "icon": "file-text"
+                "group": "Pages",
+                "pages": [
+                  {
+                    "title": "Home Page",
+                    "path": "home-page"
+                  },
+                  {
+                    "title": "App Store",
+                    "path": "app-store"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Reference",
+            "icon": "code",
+            "groups": [
+              {
+                "group": "Endpoints",
+                "openapi": "api-reference/openapi.yaml",
+                "pages": [
+                  {
+                    "group": "Convex",
+                    "pages": [
+                      {
+                        "title": "appskkkklkj",
+                        "path": "appskkkklkj"
+                      }
+                    ],
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Help Center",
+            "icon": "help-circle",
+            "pages": [
+              {
+                "title": "Help Center",
+                "path": "help-center",
+                "icon": "home"
               },
               {
-                "title": "Settings",
-                "path": "settings",
-                "icon": "settings"
+                "group": "FAQs",
+                "icon": "help-circle",
+                "expandable": false,
+                "pages": [
+                  {
+                    "title": "Getting Started FAQ",
+                    "path": "help-center/faq/getting-started"
+                  }
+                ]
+              },
+              {
+                "group": "Troubleshooting",
+                "icon": "alert-triangle",
+                "expandable": false,
+                "pages": [
+                  {
+                    "title": "Cannot Access Project",
+                    "path": "help-center/troubleshooting/cannot-access-project"
+                  }
+                ]
+              },
+              {
+                "group": "Guides",
+                "icon": "book-open",
+                "expandable": false,
+                "pages": [
+                  {
+                    "title": "Create New Doc Space",
+                    "path": "help-center/guides/create-new-doc-space"
+                  }
+                ]
               }
-            ],
-            "openapi": "api-reference/openapi.yaml"
+            ]
+          },
+          {
+            "tab": "Changelog",
+            "icon": "clock",
+            "pages": [
+              {
+                "title": "Release History",
+                "path": "changelog",
+                "icon": "history"
+              }
+            ]
           }
         ]
       },
       {
-        "tab": "API Reference",
-        "icon": "code",
+        "product": "Convex Backend",
         "groups": [
           {
-            "group": "Endpoints",
-            "openapi": "api-reference/openapi.yaml",
-            "pages": [
-              {
-                "group": "Convex",
-                "pages": [],
-                "openapi": "api-reference/convex-spec-1771945068335.yaml"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Help Center",
-        "icon": "help-circle",
-        "pages": [
-          {
-            "title": "Help Center",
-            "path": "help-center",
-            "icon": "home"
-          },
-          {
-            "group": "FAQs",
-            "icon": "help-circle",
-            "expandable": false,
-            "pages": [
-              {
-                "title": "Getting Started FAQ",
-                "path": "help-center/faq/getting-started"
-              }
-            ]
-          },
-          {
-            "group": "Troubleshooting",
-            "icon": "alert-triangle",
-            "expandable": false,
-            "pages": [
-              {
-                "title": "Cannot Access Project",
-                "path": "help-center/troubleshooting/cannot-access-project"
-              }
-            ]
-          },
-          {
-            "group": "Guides",
-            "icon": "book-open",
-            "expandable": false,
-            "pages": [
-              {
-                "title": "Create New Doc Space",
-                "path": "help-center/guides/create-new-doc-space"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Changelog",
-        "icon": "clock",
-        "pages": [
-          {
-            "title": "Release History",
-            "path": "changelog",
-            "icon": "history"
+            "group": "Getting Started",
+            "pages": []
           }
         ]
       }
