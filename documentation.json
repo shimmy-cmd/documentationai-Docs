@@ -39,10 +39,6 @@
                   {
                     "title": "Home Page",
                     "path": "home-page"
-                  },
-                  {
-                    "title": "App Store",
-                    "path": "app-store"
                   }
                 ]
               }
@@ -133,6 +129,12 @@
           {
             "group": "Getting Started",
             "pages": []
+          },
+          {
+            "group": "Available APIs",
+            "pages": [],
+            "icon": "activity-square",
+            "openapi": "api-reference/convex-spec-1771945068335.yaml"
           }
         ]
       }

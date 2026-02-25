@@ -1,0 +1,124 @@
+---
+title: App Store (Home)
+sidebar_position: 2
+---
+# App Store (Home)
+
+The App Store page is the main listing experience for Shomri App Store. It displays apps available to the current device based on the device’s app management mode and filtering configuration.
+
+<Callout kind="note" collapsed="false">
+  This is a mobile-first web experience designed for managed iOS device users.
+</Callout>
+
+## Route
+
+- **Route:** `/:deviceId`
+
+- **File:** `Index.tsx`
+
+## Purpose
+
+- Show a curated app catalog that adapts to the device’s configured mode.
+
+- Support a hybrid listing strategy (paginated catalog + static whitelist) when applicable.
+
+## Display modes
+
+The page supports three display modes, determined by the device’s app configuration:
+
+### 1) Apps by Category (Browse Mode)
+
+**What the user sees**
+
+- A **paginated** app catalog
+
+- Apps filtered by the device’s **category settings**
+
+- A merged view that includes:
+
+  - Category-based catalog apps (paginated)
+
+  - Explicitly whitelisted apps (“static whitelist”)
+
+**Data sources**
+
+- Paginated allowed apps list (optionally searchable)
+
+- Static whitelist list
+
+- Device app configuration
+
+### 2) Approved Only (Whitelist Mode)
+
+**What the user sees**
+
+- Only apps that are **explicitly whitelisted**
+
+- No paginated catalog
+
+**Data sources**
+
+- Static whitelist list
+
+- Device app configuration
+
+### 3) Open Blocklist (Apple Mode)
+
+**What the user sees**
+
+- A list of **blocked apps only**
+
+- A message indicating the rest are available directly in the Apple App Store
+
+- Users install everything else from the Apple App Store
+
+**Data sources**
+
+- Device app configuration (blocklist + mode)
+
+## APIs used
+
+### Queries
+
+- `api.devices.apps.getConfig`[ — ](/help-center/guides/create-new-doc-space)`POST /api/run/devices/apps/getConfig`
+
+  - [**Input:**](/help-center/guides/create-new-doc-space)[ ](/help-center/guides/create-new-doc-space)`{ deviceConfig }`
+
+  - [**Output:**](/help-center/guides/create-new-doc-space)[ ](/help-center/guides/create-new-doc-space)`{ appMode, appFilter }`
+
+- `api.apps.list.allowedByDeviceFilter` — `POST /api/run/apps/list/allowedByDeviceFilter`
+
+  - **Input:** `{ serial, query? }`
+
+  - **Output:** Paginated apps
+
+- `api.apps.list.allowedByDeviceStatic` — `POST /api/run/apps/list/allowedByDeviceStatic`
+
+  - **Input:** `{ serial }`
+
+  - **Output:** Static whitelist apps
+
+## Merge logic (Browse Mode)
+
+When in **Apps by Category** mode:
+
+1. Fetch paginated results from `api.apps.list.allowedByDeviceFilter`.
+
+2. Fetch static whitelist results from `api.apps.list.allowedByDeviceStatic`.
+
+3. Merge the two lists:
+
+   - Sort alphabetically
+
+   - Deduplicate by app ID
+
+4. Display rule to avoid infinite-scroll gaps:
+
+   - Static whitelist apps are shown **only up to** the last paginated result name
+
+## Notes for implementers
+
+- The mode is device-specific, so ensure you resolve the active device context before rendering this page.
+
+- Keep pagination behavior stable (dedupe + merge must not “jump” results as the user scrolls).
+
