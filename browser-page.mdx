@@ -1,0 +1,342 @@
+---
+title: Browser page
+description: Configure and review browser filtering policies in Shomri Hub, including viewing current rules, requesting changes, and updating self-managed settings.
+---
+
+## Browser settings overview
+
+Browser settings control which websites a device can access. Policies define the browser mode, allowed and blocked categories, whitelists and blacklists, and NSFW and blur behavior.
+
+The Browser page in Shomri Hub exposes three main flows:
+
+- Viewing the current policies applied to a device
+- Requesting a browser settings change as a child or mentee
+- Updating browser policies directly for self-managed devices
+
+Use this page as a spec for building or integrating the Browser page UI with the underlying APIs.
+
+<Callout kind="info">
+
+Browser policies are always scoped by `deviceId`. Every API on this page expects a device identifier in its input.
+
+</Callout>
+
+## Viewing browser policies
+
+Use the Browser page to show the current policy for a given device. The UI surfaces:
+
+- **Browser mode** – overall filtering mode applied to the browser
+- **Categories** – list of content categories with allow/block status
+- **Whitelist** – domains always allowed
+- **Blacklist** – domains always blocked
+- **NSFW** – whether NSFW content is blocked or allowed
+- **Blur** – whether to blur sensitive content in-page
+
+### View policies UI model
+
+Represent the view state with fields that mirror the `api.devices.policies.get` response:
+
+- `browserMode`
+- `categories`
+- `whitelist`
+- `blacklist`
+- `nsfw`
+- `blur`
+
+Use the API as the single source of truth, and bind these fields to your UI controls (toggles, lists, badges, etc.).
+
+### Get browser policies API
+
+The Browser page calls `api.devices.policies.get` to fetch the current policies for a device.
+
+#### Input
+
+Use `deviceId` to identify which device policy to load.
+
+<ParamField body="deviceId" param-type="string" required="true" show-location="false">
+
+Unique identifier of the device whose browser policies you want to display.
+
+</ParamField>
+
+#### Output
+
+The response returns the full browser policy state for the device.
+
+<ParamField body="browserMode" param-type="string" required="true" show-location="false">
+
+Current browser mode applied to the device. Typical values represent different restriction levels (for example, `locked`, `filtered`, `open`).
+
+</ParamField>
+
+<ParamField body="categories" param-type="array" required="true" show-location="false">
+
+List of category rules that the policy uses to filter sites. Each item should describe a content category and whether it is allowed or blocked.
+
+</ParamField>
+
+<ParamField body="whitelist" param-type="array" required="true" show-location="false">
+
+List of domains or URL patterns that are always allowed, regardless of category rules.
+
+</ParamField>
+
+<ParamField body="blacklist" param-type="array" required="true" show-location="false">
+
+List of domains or URL patterns that are always blocked, regardless of category rules.
+
+</ParamField>
+
+<ParamField body="nsfw" param-type="boolean" required="true" show-location="false">
+
+Whether NSFW content is blocked by policy on this device.
+
+</ParamField>
+
+<ParamField body="blur" param-type="boolean" required="true" show-location="false">
+
+Whether to blur sensitive or NSFW content instead of fully blocking it.
+
+</ParamField>
+
+#### Example payloads
+
+Use this example to validate your UI bindings and parsing logic.
+
+<CodeGroup tabs="Response JSON">
+
+```json
+{
+  "browserMode": "filtered",
+  "categories": [
+    {
+      "id": "social_media",
+      "label": "Social Media",
+      "status": "allowed"
+    },
+    {
+      "id": "adult",
+      "label": "Adult Content",
+      "status": "blocked"
+    }
+  ],
+  "whitelist": [
+    "learn.mathplanet.org",
+    "school-portal.cityschool.edu"
+  ],
+  "blacklist": [
+    "video-stream-unlimited.net",
+    "unfiltered-chat.space"
+  ],
+  "nsfw": true,
+  "blur": true
+}
+```
+
+</CodeGroup>
+
+A successful integration shows these values reflected in the Browser page immediately after the API call completes.
+
+## Requesting browser changes (child or mentee flow)
+
+When a child or mentee taps a setting they do not have permission to change, the Browser page opens a modal to request a change instead of toggling the setting directly.
+
+Use `request.create.webRequest` to submit these requests for review.
+
+<Callout kind="info">
+
+Use this flow when the current viewer is not allowed to change policies directly. Keep the UI focused on **requesting** a change, not editing the policy.
+
+</Callout>
+
+### Request change UI behavior
+
+Trigger the request modal when:
+
+- The user interacts with a disabled control (for example, trying to enable a blocked category).
+- The user attempts to switch browser mode to a more permissive state they cannot manage.
+- The user tries to add a site to whitelist or remove a site from blacklist without edit permissions.
+
+The modal should capture:
+
+- The target device
+- What the user wants to change to or from
+- An optional reason message
+
+### Create browser change request API
+
+Use `request.create.webRequest` to create a new browser change request.
+
+#### Input
+
+<ParamField body="deviceId" param-type="string" required="true" show-location="false">
+
+Device for which the mentee wants to request a browser change.
+
+</ParamField>
+
+<ParamField body="type" param-type="string" required="true" show-location="false">
+
+Type of browser change requested. For example, switching mode, unblocking a category, or whitelisting a specific site.
+
+</ParamField>
+
+<ParamField body="target" param-type="string" required="true" show-location="false">
+
+Target value or resource of the request. For example, the desired browser mode (`filtered` to `open`), the category identifier, or the domain to whitelist.
+
+</ParamField>
+
+<ParamField body="reason" param-type="string" required="false" show-location="false">
+
+Optional explanation from the child or mentee describing why they are requesting this change.
+
+</ParamField>
+
+#### Example request payload
+
+<CodeGroup tabs="Request JSON">
+
+```json
+{
+  "deviceId": "dev_7g29qmf4xk",
+  "type": "whitelist-site",
+  "target": "docs.research-library.org",
+  "reason": "Needed for my history project on ancient civilizations"
+}
+```
+
+</CodeGroup>
+
+After the request is created, redirect the mentee back to the Browser page and show a confirmation that their request is pending review.
+
+## Updating policies (self-managed flow)
+
+For self-managed devices (for example, a parent managing their own profile or an admin), the Browser page lets the user edit policies directly: toggling categories, adjusting NSFW and blur, changing mode, and updating white/blacklists.
+
+Use `api.devices.policies.update` to apply these changes.
+
+<Callout kind="tip">
+
+Use this flow only when the current user has permission to **edit** policies. Do not show the mentee request modal for these users; apply changes directly and persist them with an update call.
+
+</Callout>
+
+### Self-managed browser settings UI
+
+In self-managed mode, the Browser page should:
+
+- Render toggles and controls as editable
+- Track local changes in a pending state
+- Provide a clear **Save** action to commit the new policy
+- Optionally provide **Cancel** or **Reset** actions to discard changes
+
+When the user saves, send a single update with the complete policy patch.
+
+### Update policies API
+
+`api.devices.policies.update` applies a partial update (`patch`) to the browser policy for a device.
+
+#### Input
+
+<ParamField body="deviceId" param-type="string" required="true" show-location="false">
+
+Device whose browser policy you want to update.
+
+</ParamField>
+
+<ParamField body="patch" param-type="object" required="true" show-location="false">
+
+Partial policy object describing the changes to apply. You can include any subset of browser policy fields, such as `browserMode`, `categories`, `whitelist`, `blacklist`, `nsfw`, or `blur`.
+
+</ParamField>
+
+#### Output
+
+<ParamField body="success" param-type="boolean" required="true" show-location="false">
+
+Indicates whether the policy update succeeded.
+
+</ParamField>
+
+<ParamField body="newPolicy" param-type="object" required="true" show-location="false">
+
+The updated browser policy after applying the patch. Structure matches the `api.devices.policies.get` output.
+
+</ParamField>
+
+#### Example request and response
+
+<CodeGroup tabs="Request JSON,Response JSON">
+
+```json
+{
+  "deviceId": "dev_7g29qmf4xk",
+  "patch": {
+    "browserMode": "filtered",
+    "nsfw": true,
+    "blur": true,
+    "whitelist": [
+      "learn.mathplanet.org",
+      "school-portal.cityschool.edu",
+      "docs.research-library.org"
+    ],
+    "blacklist": [
+      "video-stream-unlimited.net"
+    ]
+  }
+}
+```
+
+```json
+{
+  "success": true,
+  "newPolicy": {
+    "browserMode": "filtered",
+    "categories": [
+      {
+        "id": "social_media",
+        "label": "Social Media",
+        "status": "allowed"
+      },
+      {
+        "id": "adult",
+        "label": "Adult Content",
+        "status": "blocked"
+      }
+    ],
+    "whitelist": [
+      "learn.mathplanet.org",
+      "school-portal.cityschool.edu",
+      "docs.research-library.org"
+    ],
+    "blacklist": [
+      "video-stream-unlimited.net"
+    ],
+    "nsfw": true,
+    "blur": true
+  }
+}
+```
+
+</CodeGroup>
+
+A correct self-managed flow:
+
+1. Loads current policy with `api.devices.policies.get`.
+2. Lets the user change browser settings in the UI.
+3. Sends a single `api.devices.policies.update` call with a `patch` based on those changes.
+4. Refreshes the view from `newPolicy` and shows a confirmation that settings are saved.
+
+## Choosing between request and update flows
+
+Use permissions and device ownership to decide when to show each flow.
+
+<Callout kind="info">
+
+- Use **request.create.webRequest** when the user is a child or mentee without edit rights.
+- Use **api.devices.policies.update** when the user manages their own browser policy or has admin rights on the device.
+
+</Callout>
+
+Aligning the Browser page behavior with these two flows keeps the experience clear for mentees while giving self-managed users direct control over their browser policies.

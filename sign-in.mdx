@@ -1,0 +1,338 @@
+---
+title: Sign in
+description: Define the Shomri Hub sign-in flow, reset behavior, header UI after login, and the Clerk authentication APIs that back each screen.
+---
+
+## Sign-in screen
+
+The sign-in screen authenticates pre-provisioned Shomri Hub users by email and password.
+
+### UI
+
+- App logo centered at the top
+- **Email** field
+- **Password** field
+- **Sign in** primary button
+- **Forgot password?** link to start password reset
+- Optional error messaging inline (for invalid credentials or server issues)
+
+### Behavior
+
+- Authenticate the user using Clerk `signIn.create` with `identifier` and `password`
+- On successful sign-in, create a session and route into the main app shell (with header)
+- On failed sign-in, keep the user on this screen and surface an appropriate error message
+
+<Callout kind="info">
+
+Shomri Hub supports sign-in for pre-provisioned users only. Do not expose any self-service sign-up or registration flows.
+
+</Callout>
+
+<Callout kind="note">
+
+If any flow discovers that the current user is not provisioned (for example, missing account mapping, revoked access, or unknown identity), redirect back to the sign-in screen.
+
+</Callout>
+
+## API: Clerk signIn.create (sign in)
+
+Use `signIn.create` to authenticate a user with their email and password from the sign-in screen.
+
+### Inputs
+
+<ParamField body="identifier" param-type="string" required="true" show-location="false">
+User identifier, typically the email address entered in the sign-in form.
+</ParamField>
+
+<ParamField body="password" param-type="string" required="true" show-location="false">
+Plain-text password from the sign-in form. Clerk validates this against the stored hash.
+</ParamField>
+
+### Outputs
+
+<ParamField body="sessionId" param-type="string" required="true" show-location="false">
+Identifier of the newly created session. Use this to establish the authenticated context for subsequent requests.
+</ParamField>
+
+<ParamField body="user" param-type="object" required="true" show-location="false">
+Clerk user object for the authenticated user. Use fields like `firstName`, `lastName`, and `primaryEmailAddress` when rendering the header and profile modal.
+</ParamField>
+
+<ParamField body="status" param-type="string" required="true" show-location="false">
+Authentication outcome, such as `complete` for a successful sign-in or an intermediate value if further factors are required.
+</ParamField>
+
+### Example request and response
+
+<CodeGroup tabs="Request,Response">
+
+```json
+{
+  "identifier": "maya.levi@contosohealth.com",
+  "password": "Skylake#492"
+}
+```
+
+```json
+{
+  "sessionId": "sess_9wR0QmJgVt32bD7h",
+  "status": "complete",
+  "user": {
+    "id": "user_a3x92LmN7p4yKq1z",
+    "firstName": "Maya",
+    "lastName": "Levi",
+    "primaryEmailAddress": {
+      "id": "idn_8pQw6nKf9tHv4Zs2",
+      "emailAddress": "maya.levi@contosohealth.com"
+    },
+    "primaryPhoneNumber": {
+      "id": "idn_4vFb7pQk6zTx1Nc8",
+      "phoneNumber": "+1 415 555 0197"
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+### UI integration notes
+
+- On `status: complete`, store or propagate `sessionId` to your session middleware and route the user into the main app.
+- If Clerk returns an error (for example, invalid credentials), keep the user on the sign-in page and show an error message without exposing which field is incorrect.
+
+## Password reset flow
+
+The password reset flow starts from the **Forgot password?** link on the sign-in screen and typically spans two screens:
+
+- **Request reset code** (enter email or phone)
+- **Enter code and new password** (change password)
+
+### Request reset code screen
+
+#### UI
+
+- Logo
+- **Email** field (or other identifier, depending on your Clerk configuration)
+- **Send reset code** button
+- Link back to the main sign-in screen
+
+#### Behavior
+
+- Use `signIn.create` in reset mode to send a reset code to the provided identifier
+- On success, transition to the **Change password** screen
+- On error (for example, identifier not found), optionally show a generic error and keep the user on this screen
+
+## API: Clerk signIn.create (reset)
+
+Use `signIn.create` with a reset strategy to initiate password reset by sending a one-time code to the user.
+
+### Inputs
+
+<ParamField body="strategy" param-type="string" required="true" show-location="false">
+Reset strategy, such as `reset_password_email_code` or `reset_password_phone_code`, depending on how you want Clerk to send the reset code.
+</ParamField>
+
+<ParamField body="identifier" param-type="string" required="true" show-location="false">
+User identifier that receives the reset code. Typically the email address typed into the reset form.
+</ParamField>
+
+### Outputs
+
+<ParamField body="status" param-type="string" required="false" show-location="false">
+High-level outcome of the reset initiation, such as `needs_first_factor` when a code has been dispatched.
+</ParamField>
+
+<ParamField body="supportedFirstFactors" param-type="array" required="false" show-location="false">
+Array describing allowed first-factor strategies for the current reset flow, including code-based factors.
+</ParamField>
+
+<ParamField body="firstFactorVerification" param-type="object" required="false" show-location="false">
+Details about code delivery and verification, including where the reset code was sent.
+</ParamField>
+
+### Example request and response
+
+<CodeGroup tabs="Request,Response">
+
+```json
+{
+  "strategy": "reset_password_email_code",
+  "identifier": "maya.levi@contosohealth.com"
+}
+```
+
+```json
+{
+  "status": "needs_first_factor",
+  "supportedFirstFactors": [
+    {
+      "strategy": "reset_password_email_code"
+    }
+  ],
+  "firstFactorVerification": {
+    "status": "needed",
+    "strategy": "reset_password_email_code"
+  }
+}
+```
+
+</CodeGroup>
+
+### UI integration notes
+
+- After a successful reset initiation, show a confirmation message like `We sent a code to your email` and move to the **Change password** screen.
+- Do not confirm whether the email exists; keep error messages generic to avoid leaking user existence.
+
+## Change password screen
+
+The change password screen verifies the reset code and sets a new password.
+
+### UI
+
+- Logo
+- **Reset code** input (from email or SMS)
+- **New password** input
+- **Confirm new password** input (optional but recommended)
+- **Change password** primary button
+- Link back to the main sign-in screen
+
+### Behavior
+
+- Use `signIn.attemptFirstFactor` with the reset strategy, `code`, and new `password`
+- On success, Clerk returns `sessionId`, `user`, and `status`; treat this as a signed-in state and route to the main app
+- On invalid or expired code, keep the user on this screen and show an error, optionally offering to resend the code from the previous step
+
+## API: Clerk signIn.attemptFirstFactor (change password)
+
+Use `signIn.attemptFirstFactor` to verify the reset code and set the user's new password.
+
+### Inputs
+
+<ParamField body="strategy" param-type="string" required="true" show-location="false">
+Reset verification strategy matching the one used when sending the code, such as `reset_password_email_code`.
+</ParamField>
+
+<ParamField body="code" param-type="string" required="true" show-location="false">
+One-time code that the user received and entered into the change password form.
+</ParamField>
+
+<ParamField body="password" param-type="string" required="true" show-location="false">
+New password selected by the user. Clerk stores this and uses it for subsequent sign-in attempts.
+</ParamField>
+
+### Outputs
+
+<ParamField body="sessionId" param-type="string" required="true" show-location="false">
+Identifier of the authenticated session created as part of the completed reset flow.
+</ParamField>
+
+<ParamField body="user" param-type="object" required="true" show-location="false">
+Clerk user object after the password has been updated.
+</ParamField>
+
+<ParamField body="status" param-type="string" required="true" show-location="false">
+Status indicating the result of the password reset and sign-in flow, typically `complete` on success.
+</ParamField>
+
+### Example request and response
+
+<CodeGroup tabs="Request,Response">
+
+```json
+{
+  "strategy": "reset_password_email_code",
+  "code": "794213",
+  "password": "NewLakeview#735"
+}
+```
+
+```json
+{
+  "sessionId": "sess_2nD8LmQhWx59cY4t",
+  "status": "complete",
+  "user": {
+    "id": "user_a3x92LmN7p4yKq1z",
+    "firstName": "Maya",
+    "lastName": "Levi",
+    "primaryEmailAddress": {
+      "id": "idn_8pQw6nKf9tHv4Zs2",
+      "emailAddress": "maya.levi@contosohealth.com"
+    },
+    "primaryPhoneNumber": {
+      "id": "idn_4vFb7pQk6zTx1Nc8",
+      "phoneNumber": "+1 415 555 0197"
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+### UI integration notes
+
+- Treat a successful password change as a completed sign-in. Redirect the user into the main app, not back to the sign-in page.
+- If `status` is not `complete`, inspect the response to determine whether further factors are required and present additional UI if needed.
+
+## Header (after login)
+
+After a successful sign-in (or completed password reset), Shomri Hub shows a persistent header across the app.
+
+### Header UI
+
+- **Left:** Shomri Hub logo or product name
+- **Right:** Profile avatar or initial-based icon
+- Clicking the profile icon opens a **profile modal** anchored to the header
+
+### Profile modal content
+
+Populate the profile modal from the Clerk `user` object returned in the sign-in responses.
+
+- **Name:** `user.firstName` + `user.lastName`
+- **Email:** `user.primaryEmailAddress.emailAddress`
+- **Phone:** `user.primaryPhoneNumber.phoneNumber` (if available)
+- **Sign out** button
+
+<Callout kind="info">
+
+Always derive header and profile modal fields from the authenticated Clerk `user` object associated with the active `sessionId`. Do not cache or hard-code user details.
+
+</Callout>
+
+### API: useClerk().signOut() (sign out)
+
+Use `useClerk().signOut()` from the profile modal to end the current session and route the user back to the sign-in page.
+
+#### Behavior
+
+- Clear the active Clerk session in the client and backend
+- Invalidate any local session state tied to `sessionId`
+- Redirect to the sign-in screen
+
+### Example sign-out handler
+
+```ts
+import { useClerk } from "@clerk/clerk-react"
+
+export function ProfileMenu() {
+  const { signOut, user } = useClerk()
+
+  const handleSignOut = async () => {
+    await signOut()
+    // After sign-out, route back to the sign-in page
+    window.location.href = "/sign-in"
+  }
+
+  return (
+    <button type="button" onClick={handleSignOut}>
+      Sign out {user?.firstName} {user?.lastName}
+    </button>
+  )
+}
+```
+
+### Global redirect rule
+
+Ensure all authenticated routes enforce the following:
+
+- If there is **no valid session** or the current session user is **not provisioned** for Shomri Hub, route the user to the sign-in page.
+- If a valid, provisioned session exists, render the app with the header and profile modal available on every screen.
