@@ -147,12 +147,33 @@
             "group": "Available APIs",
             "pages": [
               {
-                "title": "pizza part",
-                "path": "pizza-part"
+                "group": "devices",
+                "pages": [
+                  {
+                    "title": "devices.add",
+                    "path": "devicesadd",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/devices/apps/update",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  }
+                ]
+              },
+              {
+                "group": "apps",
+                "pages": [
+                  {
+                    "title": "apps.list.updates",
+                    "path": "appscheesepiiza",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/apps/list/updates",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Mutation"
+                  }
+                ]
               }
             ],
-            "icon": "activity-square",
-            "openapi": "api-reference/convex-spec-1771945068335.yaml"
+            "icon": "activity-square"
           }
         ]
       }
