@@ -151,19 +151,6 @@
             "group": "Available APIs",
             "pages": [
               {
-                "group": "devices",
-                "pages": [
-                  {
-                    "title": "apps.list.allowedByDeviceFIlter",
-                    "path": "allowedByDeviceFilter",
-                    "badge": "Query",
-                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/apps/list/allowedByDeviceFilter",
-                    "openapi-mode": "auto",
-                    "method": "POST"
-                  }
-                ]
-              },
-              {
                 "group": "apps",
                 "pages": [
                   {
@@ -175,6 +162,42 @@
                     "badge": "Mutation"
                   }
                 ]
+              },
+              {
+                "group": "appCategories",
+                "pages": []
+              },
+              {
+                "group": "devices",
+                "pages": []
+              },
+              {
+                "group": "groups",
+                "pages": []
+              },
+              {
+                "group": "jamf",
+                "pages": []
+              },
+              {
+                "group": "levels",
+                "pages": []
+              },
+              {
+                "group": "requests",
+                "pages": []
+              },
+              {
+                "group": "rules",
+                "pages": []
+              },
+              {
+                "group": "siteCategories",
+                "pages": []
+              },
+              {
+                "group": "users",
+                "pages": []
               }
             ],
             "icon": "activity-square"
