@@ -1,0 +1,20 @@
+---
+title: apps.list.allowedByDeviceStatic
+description: Returns the full non-paginated list of apps explicitly allowed for a given device serial, combining level and device-specific allow/block rules.
+---
+
+## Overview
+
+<Callout kind="info">
+
+Type: Query
+
+</Callout>
+
+`apps.list.allowedByDeviceStatic` returns the complete, non-paginated set of apps that are explicitly allowed on a specific device, identified by its serial number. It runs as a Convex query in `convex/apps/list.ts`, so it is safe to call from the client for read-only access to allowed-app data.
+
+## Purpose
+
+This query computes the allowed apps for a device by serial, combining and prioritizing both level-level and device-specific allow/block lists into a single resolved set. Because the result is non-paginated, it is best suited for UI screens that need the full allowed-app list at once rather than incremental loading.
+
+In the `app-store-project`, the React pages `Index.tsx` and `Updates.tsx`, as well as the `AppDetailHeader` component, use `useQuery(api.apps.list.allowedByDeviceStatic, ...)` to load the allowed-app set for the current device. These views rely on the query to decide which apps to show as available, which to mark as blocked, and how to render app details consistently across the app store experience.

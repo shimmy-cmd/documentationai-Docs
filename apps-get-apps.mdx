@@ -1,0 +1,18 @@
+---
+title: apps.get.apps
+description: Returns basic app details for a list of app IDs, including name, bundleId, iconUrl, and webkit configuration.
+---
+
+## Overview
+
+<Callout kind="info">
+
+Type: Query
+
+</Callout>
+
+## Purpose
+
+Use `apps.get.apps` to fetch basic metadata for a set of apps by their IDs from the Convex backend. The query returns each app's name, `bundleId`, `iconUrl`, and WebKit-related configuration so the frontend can render app tiles and browser behavior correctly.
+
+In the app-store-project, this query runs via `useQuery(api.apps.get.apps, ...)` inside `useAppCategories`. That hook uses the returned app details to build category-related UI and state, such as showing which apps belong to each category in the App Store experience.

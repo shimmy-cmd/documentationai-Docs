@@ -1,8 +1,18 @@
 ---
-title: Apps.list.updates
-description: >-
-  purpose of this API is to call a list of all devices on the users device that
-  need to be updated.
+title: apps.list.updates
+description: Fetch installed app versions for a device via Jamf so the app can detect which installed apps have newer versions available.
 ---
 
+## Overview
 
+`apps.list.updates` fetches installed app version data for a specific device and returns which apps have newer versions available. Use it to drive app update indicators in the App Store experience.
+
+<Callout kind="info">
+
+**Type:** Action
+
+</Callout>
+
+## Purpose
+
+`apps.list.updates` checks Jamf data for a given device and returns a mapping of installed apps to the latest known versions, or `null` when update information is not available. The app-store-project calls this action from `useDeviceLibrary` and `useInstalledApps` hooks to look up update status for the device identified by its serial number. The result lets the app highlight which installed apps are out of date, so users can see and prioritize pending updates for that device.

@@ -159,7 +159,39 @@
                     "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/apps/list/updates",
                     "openapi-mode": "auto",
                     "method": "POST",
-                    "badge": "Mutation"
+                    "badge": "Action"
+                  },
+                  {
+                    "title": "apps.get.apps",
+                    "path": "apps-get-apps",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/apps/get/apps",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  },
+                  {
+                    "title": "apps.list.allowedByDeviceFilter",
+                    "path": "apps-list-allowed-by-device-filter",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/apps/list/allowedByDeviceFilter",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  },
+                  {
+                    "title": "apps.list.allowedByDeviceStatic",
+                    "path": "apps-list-allowed-by-device-static",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/apps/list/allowedByDeviceStatic",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  },
+                  {
+                    "title": "apps.list.allOnDeviceWithStatus",
+                    "path": "apps-list-all-on-device-with-status",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/apps/list/allOnDeviceWithStatus",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Action"
                   }
                 ]
               },

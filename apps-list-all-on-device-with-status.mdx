@@ -1,0 +1,18 @@
+---
+title: apps.list.allOnDeviceWithStatus
+description: Return all apps installed on a device, including their allow or block status for use in the Installed Apps review flow.
+---
+
+## Overview
+
+<Callout kind="info">
+
+**Type: Action**
+
+</Callout>
+
+`apps.list.allOnDeviceWithStatus` returns the apps installed on a specific device along with their current allow or block status. The frontend calls this action with a device serial number and receives an array of app records used to power the Installed Apps review UI.
+
+## Purpose
+
+Use `apps.list.allOnDeviceWithStatus` to load a device's installed apps for review in the App Store experience. The `InstalledAppsReviewModal` uses the returned list to display app icons and names and to initialize toggles based on each app's `status` field. When the user confirms their choices, the modal collects the `_id` of each allowed app and submits those back to your backend. This action is the read side of that flow, giving the UI everything it needs to present and edit allowed vs blocked apps per device.

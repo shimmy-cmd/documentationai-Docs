@@ -1,0 +1,20 @@
+---
+title: apps.list.allowedByDeviceFilter
+description: Returns a paginated list of apps that are allowed for a given device serial, with optional search-based filtering applied.
+---
+
+## Overview
+
+`apps.list.allowedByDeviceFilter` returns a paginated list of apps that a specific device is allowed to install or display. The function runs on the Convex backend under `convex/apps/list.ts`.
+
+<Callout kind="info">
+
+**Type: Query** — use this function with Convex query clients such as `usePaginatedQuery` or `query`.
+
+</Callout>
+
+## Purpose
+
+`apps.list.allowedByDeviceFilter` computes which apps are allowed for a device, identified by its serial number. It merges level-wide filters, device-specific filters, and explicit allow/block lists, and it always excludes apps that are blocked for that device. The function paginates the resulting app list so UI callers can load results incrementally. It also supports an optional search query, which filters the allowed set based on user-entered text.
+
+In the `app-store-project`, this query powers several screens via `usePaginatedQuery(api.apps.list.allowedByDeviceFilter, ...)`. The Index page uses it to show the main allowed-apps list for the current device. The Updates page uses it to show updatable apps that are still allowed by the device filters. The `AppDetailHeader` component calls it to confirm that a specific app is allowed for the device before rendering details or actions.
