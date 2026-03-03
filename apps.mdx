@@ -1,5 +1,118 @@
 ---
 title: Apps Section
-description: Used to downlaod apps
+description: Understand the main Apps listing experience in the kPhone App Store project, including routes, UI structure, and key data hooks.
 ---
-Purpose: For users to see which apps they have access to. Users can select&#x20;
+
+## Overview
+
+The Apps section is the primary app-browsing experience in the kPhone App Store project. It lets a device user discover, search, and open apps that are available to their specific device.
+
+<Callout kind="info">
+
+The Apps section is a mobile-first page, reached from the bottom navigation `Apps` tab (Store icon), and is scoped to a single managed iOS device.
+
+</Callout>
+
+## Routing and source files
+
+Use this section when you need to locate or modify the Apps listing experience in the codebase.
+
+- **Bottom navigation entry:** `Apps` tab (Store icon) in `src/components/BottomNavigation.tsx`
+- **Primary route:** `/:deviceId`
+- **Page component:** `src/pages/Index.tsx`
+- **App detail route (on tap):** `/:deviceId/app/:appId` (`src/pages/AppDetail.tsx`)
+
+`src/App.tsx` wires the `/:deviceId` route to `Index.tsx`, which renders the Apps section UI and manages navigation to updates and app details.
+
+## Header layout
+
+`Index.tsx` renders a compact header that drives most interactions on the page.
+
+- **Title:** Static text `App Store` at the top of the page.
+- **Search input:** An `<Input>` component with debounced value; once the query is long enough, it switches the list into search mode.
+- **Category select:** A `<Select>` built from the loaded apps, allowing users to filter by app category.
+- **Updates button:** A button that navigates to `/:deviceId/updates` so the user can review pending updates.
+- **Profile/avatar:** A small profile entry point on the right side of the header.
+
+The header stays fixed while the app list below scrolls, so search, filters, and updates are always reachable.
+
+## List layout and AppCard
+
+The main content is a vertically scrollable list of apps with:
+
+- **Infinite scroll:** Implemented with `useInfiniteScroll` to load more items as the user scrolls.
+- **Pull to refresh:** Implemented with `usePullToRefresh` to reload the data when the user drags down at the top of the list.
+
+Each list item is an `AppCard` from `src/components/AppCard.tsx`. Tapping an `AppCard` navigates to the app detail page at `/:deviceId/app/:appId`, where users can see more information and manage installation, but that page is documented separately.
+
+## Listing behavior
+
+### Browse mode: whitelisted and all other apps
+
+When the user has not entered a long-enough search query, the page stays in browse mode and shows two logical sections:
+
+- **Whitelisted:** A static, device-specific whitelist from `api.apps.list.allowedByDeviceStatic`. These apps are prominently surfaced and not paginated.
+- **All other:** A paginated list from `api.apps.list.allowedByDeviceFilter` using `usePaginatedQuery`. The code deduplicates and sorts apps alphabetically across the two sources before rendering.
+
+Scroll behavior (infinite scroll and pull-to-refresh) applies across this combined listing.
+
+### Search mode
+
+When the debounced search query reaches a minimum length (around 3 characters), the listing switches to a unified search mode:
+
+- The user sees a single search results list instead of separate whitelisted and all-other sections.
+- Results use the current device context and selected category to filter matches.
+- Infinite scroll still applies, but the underlying query is driven by the search term.
+
+### Apple App Store (blocked apps) mode
+
+In some device configurations, certain apps are blocked and should be installed via the native Apple App Store instead of the web App Store:
+
+- The page uses `useBlockedApps` to retrieve the set of blocked apps for the current device.
+- Blocked apps show in a dedicated list with messaging that installation must happen from the Apple App Store.
+- Other apps that are not blocked remain available through the normal browse or search modes described above.
+
+## User flows
+
+Use these user flows as a mental model for how the Apps section behaves from a device user perspective.
+
+<Steps>
+
+  <Step title="Browse available apps" icon="list">
+
+  The user taps the `Apps` tab in the bottom navigation and lands on `/:deviceId`. The page loads whitelisted apps and the all-other paginated list, sorted and deduplicated, and the user scrolls through the results with infinite scroll and pull-to-refresh.
+
+  </Step>
+
+  <Step title="Search and filter" icon="search">
+
+  The user types in the header search input. Once the query is long enough, the listing switches to search mode and shows a unified results list, further narrowed by the selected category from the header `<Select>` if present.
+
+  </Step>
+
+  <Step title="Open app detail" icon="arrow-right">
+
+  From any mode (browse, search, or blocked list), the user taps an `AppCard`. The app navigates to `/:deviceId/app/:appId`, where the detail page handles the install/update actions for that specific app.
+
+  </Step>
+
+  <Step title="Check for updates" icon="refresh-ccw">
+
+  The user taps the `Updates` button in the header, which navigates to `/:deviceId/updates`. That updates page uses backend data to show pending app updates for the current device.
+
+  </Step>
+
+</Steps>
+
+## Data and hooks (implementation notes)
+
+These are the main data sources and hooks that power the Apps section in `Index.tsx`:
+
+- **Whitelisted apps:** `api.apps.list.allowedByDeviceStatic` for the static, device-specific whitelist.
+- **Paginated browse list:** `api.apps.list.allowedByDeviceFilter` with `usePaginatedQuery` for the main browse experience and infinite scroll.
+- **Blocked apps:** `useBlockedApps` to compute which apps are blocked and must be installed via Apple App Store.
+- **Infinite scroll:** `useInfiniteScroll` to append more paginated results as the user reaches the end of the list.
+- **Pull to refresh:** `usePullToRefresh` to trigger a refetch when the user drags down at the top of the list.
+- **Debounced search:** A debounced value from the header `<Input>` that determines when the listing switches between browse and search modes.
+
+This section is the best starting point if you need to change how apps are loaded, filtered, or presented on the main App Store page.

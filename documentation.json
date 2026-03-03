@@ -45,6 +45,10 @@
                     "path": "home-page"
                   },
                   {
+                    "title": "Apps Section",
+                    "path": "apps"
+                  },
+                  {
                     "title": "Browser Page",
                     "path": "browser-page"
                   },
@@ -149,6 +153,13 @@
               {
                 "group": "devices",
                 "pages": [
+                  {
+                    "title": "app.update.list",
+                    "path": "appupdatelist",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/apps/list/allOnDeviceWithStatus",
+                    "openapi-mode": "auto",
+                    "method": "POST"
+                  },
                   {
                     "title": "devices.add",
                     "path": "devicesadd",
