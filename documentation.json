@@ -154,19 +154,12 @@
                 "group": "devices",
                 "pages": [
                   {
-                    "title": "app.update.list",
-                    "path": "appupdatelist",
-                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/apps/list/allOnDeviceWithStatus",
+                    "title": "apps.list.allowedByDeviceFIlter",
+                    "path": "allowedByDeviceFilter",
+                    "badge": "Query",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/apps/list/allowedByDeviceFilter",
                     "openapi-mode": "auto",
                     "method": "POST"
-                  },
-                  {
-                    "title": "devices.add",
-                    "path": "devicesadd",
-                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/devices/apps/update",
-                    "openapi-mode": "auto",
-                    "method": "POST",
-                    "badge": "Query"
                   }
                 ]
               },

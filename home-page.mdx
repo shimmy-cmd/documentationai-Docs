@@ -1,27 +1,29 @@
 ---
 title: App Store
-description: Define the App Store listing, App Details, and App Settings flows in Shomri Hub, including UI behavior and APIs for mentee, child, and self-managed devices.
+description: >-
+  Define the App Store listing, App Details, and App Settings flows in Shomri
+  Hub, including UI behavior and APIs for mentee, child, and self-managed
+  devices.
 sidebar_position: 2
 ---
-
 # App Store
 
 The App Store page is the main listing experience for Shomri App Store. It displays apps available to the current device based on the device’s app management mode and filtering configuration. From this listing, users open per-app **App Details** pages and, when allowed by policy, access **App Settings** via a settings entry point on the app card or within the App Details view.
 
-<Callout kind="info">
-
-This is a mobile-first web experience designed for managed iOS device users. The App Store listing leads into per-app App Details and App Settings views, which reuse the same app and device context.
-
+<Callout kind="info" collapsed="false">
+  This is a mobile-first web experience designed for managed iOS device users. The App Store listing leads into per-app App Details and App Settings views, which reuse the same app and device context.
 </Callout>
 
 ## Route
 
 - **Route:** `/:deviceId`
+
 - **File:** `Index.tsx`
 
 ## Purpose
 
 - Show a curated app catalog that adapts to the device’s configured mode.
+
 - Support a hybrid listing strategy (paginated catalog + static whitelist) when applicable.
 
 ## Display modes
@@ -33,15 +35,21 @@ The page supports three display modes, determined by the device’s app configur
 **What the user sees**
 
 - A **paginated** app catalog
+
 - Apps filtered by the device’s **category settings**
+
 - A merged view that includes:
+
   - Category-based catalog apps (paginated)
+
   - Explicitly whitelisted apps (`static whitelist`)
 
 **Data sources**
 
 - Paginated allowed apps list (optionally searchable)
+
 - Static whitelist list
+
 - Device app configuration
 
 ### 2) Approved Only (Whitelist Mode)
@@ -49,11 +57,13 @@ The page supports three display modes, determined by the device’s app configur
 **What the user sees**
 
 - Only apps that are **explicitly whitelisted**
+
 - No paginated catalog
 
 **Data sources**
 
 - Static whitelist list
+
 - Device app configuration
 
 ### 3) Open Blocklist (Apple Mode)
@@ -61,7 +71,9 @@ The page supports three display modes, determined by the device’s app configur
 **What the user sees**
 
 - A list of **blocked apps only**
+
 - A message indicating the rest are available directly in the Apple App Store
+
 - Users install everything else from the Apple App Store
 
 **Data sources**
@@ -73,6 +85,7 @@ The page supports three display modes, determined by the device’s app configur
 The App Details page mirrors an app store product page: it shows app metadata, description, screenshots, and a primary button that opens an overlay to download the app from the Apple App Store.
 
 - Present detailed information for a selected app and hand off installation to the Apple App Store.
+
 - Expose app-related configuration for a device, with different behaviors for mentee and child versus self-managed devices.
 
 The user opens App Details by selecting an app from the App Store listing. The App Settings entry point (settings button) is available from the app card and from within this view when device configuration allows per-app settings.
@@ -80,9 +93,13 @@ The user opens App Details by selecting an app from the App Store listing. The A
 ### What the user sees
 
 - App icon, name, and publisher.
+
 - Ratings and category, if available from metadata.
+
 - Long description and key highlights.
+
 - Screenshots, typically in a horizontal gallery.
+
 - A primary **Download from App Store** button.
 
 When the user clicks the download button, show an overlay that deep-links into the Apple App Store for the app.
@@ -93,101 +110,79 @@ Use the Apple Lookup API to fetch app metadata based on the App Store `trackId`.
 
 #### Inputs
 
-<ParamField query="trackId" param-type="number" required="true">
-
-The Apple App Store identifier for the app. Persist this on the app record in your catalog and pass it to the lookup call.
-
+<ParamField query="trackId" param-type="number" required="true" deprecated="false">
+  The Apple App Store identifier for the app. Persist this on the app record in your catalog and pass it to the lookup call.
 </ParamField>
 
 #### Outputs (metadata shape)
 
 Treat the Apple Lookup API response as `metadata` for the UI. The exact Apple payload is large; pull out the fields you need for the screen.
 
-<ParamField body="metadata" param-type="object" required="true">
-
-Container for the app metadata returned by the Apple Lookup API.
-
+<ParamField body="metadata" param-type="object" required="true" deprecated="false">
+  Container for the app metadata returned by the Apple Lookup API.
 </ParamField>
 
-<ParamField body="metadata.name" param-type="string">
-
-Human-readable app name used for the header.
-
+<ParamField body="metadata.name" param-type="string" required="false" deprecated="false">
+  Human-readable app name used for the header.
 </ParamField>
 
-<ParamField body="metadata.bundleId" param-type="string">
-
-Bundle identifier for the app, used to correlate with device configuration when needed.
-
+<ParamField body="metadata.bundleId" param-type="string" required="false" deprecated="false">
+  Bundle identifier for the app, used to correlate with device configuration when needed.
 </ParamField>
 
-<ParamField body="metadata.developerName" param-type="string">
-
-Publisher or developer name displayed under the app name.
-
+<ParamField body="metadata.developerName" param-type="string" required="false" deprecated="false">
+  Publisher or developer name displayed under the app name.
 </ParamField>
 
-<ParamField body="metadata.description" param-type="string">
-
-Full description text displayed in the details section.
-
+<ParamField body="metadata.description" param-type="string" required="false" deprecated="false">
+  Full description text displayed in the details section.
 </ParamField>
 
-<ParamField body="metadata.screenshots" param-type="string[]">
-
-List of screenshot image URLs displayed in the gallery.
-
+<ParamField body="metadata.screenshots" param-type="string[]" required="false" deprecated="false">
+  List of screenshot image URLs displayed in the gallery.
 </ParamField>
 
-<ParamField body="metadata.category" param-type="string">
-
-Primary category label for the app.
-
+<ParamField body="metadata.category" param-type="string" required="false" deprecated="false">
+  Primary category label for the app.
 </ParamField>
 
-<ParamField body="metadata.rating" param-type="number">
-
-Average rating score if available.
-
+<ParamField body="metadata.rating" param-type="number" required="false" deprecated="false">
+  Average rating score if available.
 </ParamField>
 
-<ParamField body="metadata.storeUrl" param-type="string">
-
-Deep link URL to the app in the Apple App Store, used in the download overlay.
-
+<ParamField body="metadata.storeUrl" param-type="string" required="false" deprecated="false">
+  Deep link URL to the app in the Apple App Store, used in the download overlay.
 </ParamField>
 
 #### Example: Apple lookup call
 
-<CodeGroup tabs="Request,Response" show-lines={true}>
+<CodeGroup show-lines="true" tabs={[]}>
+  ```bash
+  # Request: lookup app metadata by trackId
+  curl "https://itunes.apple.com/lookup?id=871761612"
+  ```
 
-```bash
-# Request: lookup app metadata by trackId
-curl "https://itunes.apple.com/lookup?id=871761612"
-```
-
-```json
-{
-  "resultCount": 1,
-  "results": [
-    {
-      "trackId": 871761612,
-      "trackName": "Shomri Companion",
-      "bundleId": "com.shomri.companion",
-      "sellerName": "Shomri Labs Ltd",
-      "description": "Shomri Companion helps families manage device usage and app access.",
-      "primaryGenreName": "Utilities",
-      "averageUserRating": 4.6,
-      "screenshotUrls": [
-        "https://is5-ssl.mzstatic.com/image/thumb/Screen1.png",
-        "https://is5-ssl.mzstatic.com/image/thumb/Screen2.png"
-      ],
-      "trackViewUrl": "https://apps.apple.com/app/id871761612"
-    }
-  ]
-}
-```
-
+  ```json
+  {
+    "resultCount": 1,
+    "results": [
+      {
+        "trackId": 871761612,
+        "trackName": "Shomri Companion",
+        "bundleId": "com.shomri.companion",
+        "sellerName": "Shomri Labs Ltd",
+        "description": "Shomri Companion helps families manage device usage and app access.",
+        "primaryGenreName": "Utilities",
+        "averageUserRating": 4.6,
+        "screenshotUrls": [
+          "https://is5-ssl.mzstatic.com/image/thumb/Screen1.png",
+          "https://is5-ssl.mzstatic.com/image/thumb/Screen2.png"
+        ],
+        "trackViewUrl": "https://apps.apple.com/app/id871761612"
+      }
+    ]
+  }
+  ```
 </CodeGroup>
 
 Map this response into the `metadata` shape your UI expects.
@@ -196,16 +191,12 @@ Map this response into the `metadata` shape your UI expects.
 
 The mentee and child App Settings view shows the current configuration for a device and lets the user request, but not apply, changes.
 
-<Callout kind="info">
-
-App Settings use the same underlying configuration API for both mentee and child and self-managed devices. The difference is how users change settings: mentees submit requests, while self-managed users update configuration directly.
-
+<Callout kind="info" collapsed="false">
+  App Settings use the same underlying configuration API for both mentee and child and self-managed devices. The difference is how users change settings: mentees submit requests, while self-managed users update configuration directly.
 </Callout>
 
-<Callout kind="info">
-
-Mentees cannot change policy directly. When they tap a setting they do not have, open a modal to submit a change request. The request then flows through your approval process.
-
+<Callout kind="info" collapsed="false">
+  Mentees cannot change policy directly. When they tap a setting they do not have, open a modal to submit a change request. The request then flows through your approval process.
 </Callout>
 
 ### View configuration
@@ -214,65 +205,53 @@ Use `api.devices.apps.getConfig` to populate the App Settings view for a specifi
 
 #### Inputs
 
-<ParamField body="deviceId" param-type="string" required="true">
-
-Identifier of the device whose app configuration you are viewing.
-
+<ParamField body="deviceId" param-type="string" required="true" deprecated="false">
+  Identifier of the device whose app configuration you are viewing.
 </ParamField>
 
 #### Outputs
 
-<ParamField body="appMode" param-type="string" required="true">
-
-Current mode for the device, such as focus or leisure. Use this to drive high-level messaging and which controls are enabled.
-
+<ParamField body="appMode" param-type="string" required="true" deprecated="false">
+  Current mode for the device, such as focus or leisure. Use this to drive high-level messaging and which controls are enabled.
 </ParamField>
 
-<ParamField body="appFilter" param-type="string" required="true">
-
-Active filter policy for apps, such as category-based or whitelist-only.
-
+<ParamField body="appFilter" param-type="string" required="true" deprecated="false">
+  Active filter policy for apps, such as category-based or whitelist-only.
 </ParamField>
 
-<ParamField body="allowedApps" param-type="string[]" required="true">
-
-List of app bundle identifiers that are explicitly allowed on the device.
-
+<ParamField body="allowedApps" param-type="string[]" required="true" deprecated="false">
+  List of app bundle identifiers that are explicitly allowed on the device.
 </ParamField>
 
-<ParamField body="blockedApps" param-type="string[]" required="true">
-
-List of app bundle identifiers that are explicitly blocked on the device.
-
+<ParamField body="blockedApps" param-type="string[]" required="true" deprecated="false">
+  List of app bundle identifiers that are explicitly blocked on the device.
 </ParamField>
 
 #### Example: config fetch
 
-<CodeGroup tabs="Request,Response" show-lines={true}>
-
-```json
-{
-  "method": "api.devices.apps.getConfig",
-  "args": {
-    "deviceId": "dev_9f32b47c2a8f4f8a"
+<CodeGroup show-lines="true" tabs={[]}>
+  ```json
+  {
+    "method": "api.devices.apps.getConfig",
+    "args": {
+      "deviceId": "dev_9f32b47c2a8f4f8a"
+    }
   }
-}
-```
+  ```
 
-```json
-{
-  "appMode": "guided",
-  "appFilter": "categories",
-  "allowedApps": [
-    "com.shomri.companion",
-    "com.duolingo.DuolingoMobile"
-  ],
-  "blockedApps": [
-    "com.supercell.clashofclans"
-  ]
-}
-```
-
+  ```json
+  {
+    "appMode": "guided",
+    "appFilter": "categories",
+    "allowedApps": [
+      "com.shomri.companion",
+      "com.duolingo.DuolingoMobile"
+    ],
+    "blockedApps": [
+      "com.supercell.clashofclans"
+    ]
+  }
+  ```
 </CodeGroup>
 
 Render sections for AppMode, Categories, Whitelist, Blacklist, and Network Rules. For mentees, treat these sections as mostly read-only, with entry points into the request flow.
@@ -284,90 +263,74 @@ When a mentee interacts with a configuration they do not have, such as tapping a
 #### Modal behavior
 
 - Show the current value and the requested new value.
+
 - Let the mentee specify a reason, which is optional.
+
 - On submit, call `request.create.appRequest`.
 
-<Callout kind="tip">
-
-You will likely define additional request types for specific changes, such as network rules updates or mode changes. Keep the modal flexible to support multiple `type` and `target` values.
-
+<Callout kind="tip" collapsed="false">
+  You will likely define additional request types for specific changes, such as network rules updates or mode changes. Keep the modal flexible to support multiple `type` and `target` values.
 </Callout>
 
 #### Inputs
 
-<ParamField body="deviceId" param-type="string" required="true">
-
-Device the request applies to.
-
+<ParamField body="deviceId" param-type="string" required="true" deprecated="false">
+  Device the request applies to.
 </ParamField>
 
-<ParamField body="type" param-type="string" required="true">
-
-Kind of change requested, such as `allowApp`, `blockApp`, or `changeMode`.
-
+<ParamField body="type" param-type="string" required="true" deprecated="false">
+  Kind of change requested, such as `allowApp`, `blockApp`, or `changeMode`.
 </ParamField>
 
-<ParamField body="target" param-type="string" required="true">
-
-Identifier for what is changing. For app changes, use the app bundle identifier; for mode changes, use the target mode name.
-
+<ParamField body="target" param-type="string" required="true" deprecated="false">
+  Identifier for what is changing. For app changes, use the app bundle identifier; for mode changes, use the target mode name.
 </ParamField>
 
-<ParamField body="reason" param-type="string" required="false">
-
-Free-text explanation from the mentee about why they are requesting the change.
-
+<ParamField body="reason" param-type="string" required="false" deprecated="false">
+  Free-text explanation from the mentee about why they are requesting the change.
 </ParamField>
 
 #### Outputs
 
-<ParamField body="requestId" param-type="string" required="true">
-
-Unique identifier for the created request, used to track approval status.
-
+<ParamField body="requestId" param-type="string" required="true" deprecated="false">
+  Unique identifier for the created request, used to track approval status.
 </ParamField>
 
-<ParamField body="status" param-type="string" required="true">
-
-Initial status of the request, such as `pending`.
-
+<ParamField body="status" param-type="string" required="true" deprecated="false">
+  Initial status of the request, such as `pending`.
 </ParamField>
 
 #### Example: change request
 
-<CodeGroup tabs="Request,Response" show-lines={true}>
-
-```json
-{
-  "method": "request.create.appRequest",
-  "args": {
-    "deviceId": "dev_9f32b47c2a8f4f8a",
-    "type": "allowApp",
-    "target": "com.supercell.clashofclans",
-    "reason": "I want to play with my friends on weekends."
+<CodeGroup show-lines="true" tabs={[]}>
+  ```json
+  {
+    "method": "request.create.appRequest",
+    "args": {
+      "deviceId": "dev_9f32b47c2a8f4f8a",
+      "type": "allowApp",
+      "target": "com.supercell.clashofclans",
+      "reason": "I want to play with my friends on weekends."
+    }
   }
-}
-```
+  ```
 
-```json
-{
-  "requestId": "req_a2f91c7e5d8240f3",
-  "status": "pending"
-}
-```
-
+  ```json
+  {
+    "requestId": "req_a2f91c7e5d8240f3",
+    "status": "pending"
+  }
+  ```
 </CodeGroup>
 
 After a successful response, close the modal and show a confirmation state indicating that the request is awaiting approval.
 
-## App Settings — Self-managed
+## [App Settings — Self-managed](/eli-docs/frontend/useDeviceAllowedApps)
 
 Self-managed users see the same configuration sections, AppMode, Categories, Whitelist, Blacklist, and Network Rules, but can update settings directly without approval workflows.
 
-<Callout kind="info">
-
-Self-managed flows call the same `api.devices.apps.getConfig` for reads but use direct update APIs for writes. Avoid reusing the mentee request modal; instead, apply changes immediately and surface any errors inline.
-
+<Callout kind="info" collapsed="false">
+  Self-managed flows call the same `api.devices.apps.getConfig` for reads but use direct update APIs for writes. Avoid reusing the mentee request modal; instead, apply changes immediately and surface any errors inline.
 </Callout>
 
 ### View configuration
@@ -375,6 +338,7 @@ Self-managed flows call the same `api.devices.apps.getConfig` for reads but use 
 Reuse `api.devices.apps.getConfig` with the same input and output contract as the mentee and child flow.
 
 - Use `appMode` and `appFilter` to drive toggles and selectors.
+
 - Allow inline editing of `allowedApps` and `blockedApps`, for example through multi-select lists or search-and-add patterns.
 
 ### Direct updates: apps configuration
@@ -383,67 +347,66 @@ Use `Devices.apps.update` to change app-related settings on a device.
 
 #### Inputs
 
-<ParamField body="device.id" param-type="string" required="true">
-
-Identifier of the device whose app configuration you want to update.
-
+<ParamField body="device.id" param-type="string" required="true" deprecated="false">
+  Identifier of the device whose app configuration you want to update.
 </ParamField>
 
-<ParamField body="appFilter" param-type="string" required="false">
-
-Updated filter policy for apps. Omit this field to leave the existing filter unchanged.
-
+<ParamField body="appFilter" param-type="string" required="false" deprecated="false">
+  Updated filter policy for apps. Omit this field to leave the existing filter unchanged.
 </ParamField>
 
-<ParamField body="allowedApps" param-type="string[]" required="false">
-
-Full list of allowed app bundle identifiers to set on the device. Provide this when the user modifies the whitelist.
-
+<ParamField body="allowedApps" param-type="string[]" required="false" deprecated="false">
+  Full list of allowed app bundle identifiers to set on the device. Provide this when the user modifies the whitelist.
 </ParamField>
 
-<ParamField body="blockedApps" param-type="string[]" required="false">
-
-Full list of blocked app bundle identifiers to set on the device. Provide this when the user modifies the blacklist.
-
+<ParamField body="blockedApps" param-type="string[]" required="false" deprecated="false">
+  Full list of blocked app bundle identifiers to set on the device. Provide this when the user modifies the blacklist.
 </ParamField>
 
 #### Outputs
 
-<ParamField body="appMode" param-type="string" required="false">
-
-Resulting app mode after the update, if the API returns it.
-
+<ParamField body="appMode" param-type="string" required="false" deprecated="false">
+  Resulting app mode after the update, if the API returns it.
 </ParamField>
 
-<ParamField body="appFilter" param-type="string" required="false">
-
-Resulting filter policy after the update.
-
+<ParamField body="appFilter" param-type="string" required="false" deprecated="false">
+  Resulting filter policy after the update.
 </ParamField>
 
-<ParamField body="allowedApps" param-type="string[]" required="false">
-
-Resulting allowed apps list after the update.
-
+<ParamField body="allowedApps" param-type="string[]" required="false" deprecated="false">
+  Resulting allowed apps list after the update.
 </ParamField>
 
-<ParamField body="blockedApps" param-type="string[]" required="false">
-
-Resulting blocked apps list after the update.
-
+<ParamField body="blockedApps" param-type="string[]" required="false" deprecated="false">
+  Resulting blocked apps list after the update.
 </ParamField>
 
 #### Example: update allowed and blocked apps
 
-<CodeGroup tabs="Request,Response" show-lines={true}>
+<CodeGroup show-lines="true" tabs={[]}>
+  ```json
+  {
+    "method": "Devices.apps.update",
+    "args": {
+      "device": {
+        "id": "dev_9f32b47c2a8f4f8a"
+      },
+      "appFilter": "whitelist",
+      "allowedApps": [
+        "com.shomri.companion",
+        "com.duolingo.DuolingoMobile",
+        "com.google.Chrome"
+      ],
+      "blockedApps": [
+        "com.supercell.clashofclans"
+      ]
+    }
+  }
+  ```
 
-```json
-{
-  "method": "Devices.apps.update",
-  "args": {
-    "device": {
-      "id": "dev_9f32b47c2a8f4f8a"
-    },
+  ```json
+  {
+    "appMode": "selfManaged",
     "appFilter": "whitelist",
     "allowedApps": [
       "com.shomri.companion",
@@ -454,24 +417,7 @@ Resulting blocked apps list after the update.
       "com.supercell.clashofclans"
     ]
   }
-}
-```
-
-```json
-{
-  "appMode": "selfManaged",
-  "appFilter": "whitelist",
-  "allowedApps": [
-    "com.shomri.companion",
-    "com.duolingo.DuolingoMobile",
-    "com.google.Chrome"
-  ],
-  "blockedApps": [
-    "com.supercell.clashofclans"
-  ]
-}
-```
-
+  ```
 </CodeGroup>
 
 ### Direct updates: network rules
@@ -480,51 +426,45 @@ Use `Devices.restrictions.update` to change network-related policies, such as do
 
 #### Inputs
 
-<ParamField body="device.id" param-type="string" required="true">
-
-Identifier of the device whose network rules you are updating.
-
+<ParamField body="device.id" param-type="string" required="true" deprecated="false">
+  Identifier of the device whose network rules you are updating.
 </ParamField>
 
-<ParamField body="rules" param-type="object[]" required="true">
-
-Array of network rule objects to apply to the device. Define the rule shape consistently with your restrictions model.
-
+<ParamField body="rules" param-type="object[]" required="true" deprecated="false">
+  Array of network rule objects to apply to the device. Define the rule shape consistently with your restrictions model.
 </ParamField>
 
 #### Example: update network rules
 
-<CodeGroup tabs="Request" show-lines={true}>
-
-```json
-{
-  "method": "Devices.restrictions.update",
-  "args": {
-    "device": {
-      "id": "dev_9f32b47c2a8f4f8a"
-    },
-    "rules": [
-      {
-        "id": "rule_allow_learning",
-        "action": "allow",
-        "domains": [
-          "khanacademy.org",
-          "duolingo.com"
-        ]
+<CodeGroup show-lines="true" tabs={[]}>
+  ```json
+  {
+    "method": "Devices.restrictions.update",
+    "args": {
+      "device": {
+        "id": "dev_9f32b47c2a8f4f8a"
       },
-      {
-        "id": "rule_block_social",
-        "action": "block",
-        "domains": [
-          "tiktok.com",
-          "instagram.com"
-        ]
-      }
-    ]
+      "rules": [
+        {
+          "id": "rule_allow_learning",
+          "action": "allow",
+          "domains": [
+            "khanacademy.org",
+            "duolingo.com"
+          ]
+        },
+        {
+          "id": "rule_block_social",
+          "action": "block",
+          "domains": [
+            "tiktok.com",
+            "instagram.com"
+          ]
+        }
+      ]
+    }
   }
-}
-```
-
+  ```
 </CodeGroup>
 
 Apply optimistic UI updates where appropriate, but always reconcile with the API response or a follow-up `api.devices.apps.getConfig` call to keep the App Settings page in sync.
@@ -534,13 +474,21 @@ Apply optimistic UI updates where appropriate, but always reconcile with the API
 ### Queries
 
 - `api.devices.apps.getConfig` — `POST /api/run/devices/apps/getConfig`
+
   - **Input:** `{ deviceConfig }`
+
   - **Output:** `{ appMode, appFilter }`
+
 - `api.apps.list.allowedByDeviceFilter` — `POST /api/run/apps/list/allowedByDeviceFilter`
+
   - **Input:** `{ serial, query? }`
+
   - **Output:** Paginated apps
+
 - `api.apps.list.allowedByDeviceStatic` — `POST /api/run/apps/list/allowedByDeviceStatic`
+
   - **Input:** `{ serial }`
+
   - **Output:** Static whitelist apps
 
 ## Merge logic (Browse Mode)
@@ -548,15 +496,24 @@ Apply optimistic UI updates where appropriate, but always reconcile with the API
 When in Apps by Category mode, use a merged list to combine paginated catalog apps with the static whitelist while keeping scrolling predictable.
 
 1. Fetch paginated results from `api.apps.list.allowedByDeviceFilter`.
+
 2. Fetch static whitelist results from `api.apps.list.allowedByDeviceStatic`.
+
 3. Merge the two lists:
+
    - Sort alphabetically.
+
    - Deduplicate by app ID.
+
 4. Apply the display rule to avoid infinite-scroll gaps:
+
    - Show static whitelist apps only up to the last paginated result name.
 
 ## Notes for implementers
 
 - The mode is device-specific, so resolve the active device context before rendering this page.
+
 - Keep pagination behavior stable. The dedupe and merge logic must not cause the list to jump or reorder unexpectedly as the user scrolls.
+
 - Reuse the same app and device context as the user moves between the App Store listing, App Details, and App Settings to avoid redundant fetches and inconsistent state.
+
