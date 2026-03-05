@@ -1,0 +1,27 @@
+---
+title: requests.create.appRequest
+description: Convex mutation that records a new app request for a specific device by serial, including app metadata and an optional message.
+---
+
+## Overview
+
+`requests.create.appRequest` records a new app request for a specific device in the Convex backend.
+
+<Callout kind="info">
+
+Type: Mutation
+
+</Callout>
+
+The mutation lives in `convex/requests/create.ts`. It looks up a device by its `serial` using the `by_serial` index, then inserts a new `appRequests` document linked to that device. The document stores app metadata such as the bundle identifier and App Store details (including name and `trackId`), along with an optional user message. If the mutation cannot find a matching device for the provided serial, it throws a `ConvexError`.
+
+## Purpose
+
+Use `requests.create.appRequest` whenever a user submits a request to add or manage an app for a particular device.
+
+On the frontend, the App Store project wires this mutation through Convex React hooks:
+
+- The Requests page (`src/pages/Requests.tsx`) uses `useMutation(api.requests.create.appRequest)` to submit new app requests for the current device.
+- The App Management settings screen (`src/pages/settings/AppManagement.tsx`) also calls `useMutation(api.requests.create.appRequest)` when users request additional apps or changes to app availability.
+
+These entry points ensure all app requests are consistently associated with the correct device and enriched with the same app metadata in the backend.

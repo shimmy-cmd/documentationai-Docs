@@ -1,0 +1,20 @@
+---
+title: devices.policies.get
+description: Retrieve the effective policy configuration for a device, including merged category rules and URL allow/block lists with source annotations.
+---
+
+## Overview
+
+`devices.policies.get` is a Convex **query** that returns the effective policy configuration for a device, including site categories and URL allow/block lists. It merges defaults from the device's level with any device-specific overrides and annotates each rule with its source.
+
+<Callout kind="info">
+
+**Type:** Query
+
+</Callout>
+
+## Purpose
+
+Use `devices.policies.get` on the backend (defined in `convex/devices/policies.ts`) to compute a single, resolved view of all policies that apply to a device. The query combines level-wide settings with per-device overrides so other backend functions do not need to reimplement merge logic.
+
+On the frontend, hooks such as `src/hooks/useSiteCategories.ts` and `src/hooks/useAppRestrictions.ts` call `useQuery(api.devices.policies.get, ...)` to load the current policy state. These hooks use the query's result to drive site-category UI and restriction-related views, ensuring the interface always reflects the effective policies for the selected device.

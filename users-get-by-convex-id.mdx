@@ -1,0 +1,22 @@
+---
+title: users.get.byConvexId
+description: Query Convex for all devices belonging to a specific user, returning their device IDs and display names for use in frontend hooks and UI.
+---
+
+## Overview
+
+`users.get.byConvexId` is a Convex query defined in `convex/users/get.ts` that returns all devices associated with a given user ID. It looks up devices using the `by_user` index and returns an array of objects shaped as `{ deviceId, deviceName }`.
+
+<Callout kind="info">
+
+Type: Query
+
+</Callout>
+
+The `deviceName` field is derived from each device document, using `serial ?? code` to provide a stable display name even when a serial number is missing.
+
+## Purpose
+
+Use `users.get.byConvexId` when you need the list of devices for a specific Convex user, typically to drive UI that shows or filters per-device state. On the backend, the query encapsulates the `by_user` index lookup so you do not need to query the devices table directly.
+
+On the frontend, `src/hooks/useUserDevice.ts` calls this query via `useQuery(api.users.get.byConvexId, { userId })` to retrieve the current user's devices. The hook then exposes the resulting `{ deviceId, deviceName }[]` so components can render device selectors, labels, or per-device configuration views without additional transformation logic.

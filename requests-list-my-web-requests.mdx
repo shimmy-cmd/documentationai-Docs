@@ -1,0 +1,28 @@
+---
+title: requests.list.myWebRequests
+description: Query web requests for a specific device by serial, returning a paginated list without Convex internal fields.
+---
+
+## Overview
+
+`requests.list.myWebRequests` is a Convex query defined in `convex/requests/list.ts` that returns web requests associated with a specific device.
+
+<Callout kind="info">
+
+Type: Query
+
+</Callout>
+
+The query resolves the target device by its `serial` using the `by_serial` index, then paginates the `webRequests` table using the `by_device` index for that device. Before returning results, it strips Convex-internal fields like `_id` and `_creationTime` from each item so callers receive only application-level data.
+
+## Purpose
+
+Use `requests.list.myWebRequests` to power device-scoped web request history views without exposing internal Convex metadata.
+
+In the frontend, the Requests page (`src/pages/Requests.tsx`) calls this query via:
+
+```ts
+usePaginatedQuery(api.requests.list.myWebRequests, { serial });
+```
+
+This pattern keeps pagination on the server and lets the UI request additional pages as the user scrolls or navigates through the device's web request history.

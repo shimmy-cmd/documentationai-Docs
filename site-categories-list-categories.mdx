@@ -1,0 +1,22 @@
+---
+title: siteCategories.list.categories
+description: Authenticated Convex query that returns the list of site category names for use across the app.
+---
+
+## Overview
+
+`siteCategories.list.categories` is an authenticated Convex query defined in `convex/siteCategories/list.ts` that returns all site category names.
+
+<Callout kind="info">
+
+Type: Query
+
+</Callout>
+
+The function enforces login using `ensureLoggedIn`, reads all documents from the `siteCategories` table, and returns an array containing only their `name` fields.
+
+## Purpose
+
+Use `siteCategories.list.categories` to load the full set of available site category names anywhere you need to populate category-driven UI or logic.
+
+On the frontend, `src/hooks/useSiteCategories.ts` calls `useQuery(api.siteCategories.list.categories)` to fetch these names reactively, so components always render with the current list of site categories.

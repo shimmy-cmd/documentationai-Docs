@@ -1,0 +1,22 @@
+---
+title: requests.create.webRequest
+description: Create a web request record for a device by serial, linking a URL and optional category or failing if the device does not exist.
+---
+
+## Overview
+
+`requests.create.webRequest` records a web request against a specific device, identified by its serial number.
+
+<Callout kind="info">
+
+Type: Mutation
+
+</Callout>
+
+On the backend in `convex/requests/create.ts`, this mutation looks up a device using the `by_serial` index. If it finds a matching device, it inserts a new `webRequests` document linked to that device that stores the requested `url` and an optional `category`. If no device matches the provided serial, the mutation throws a `ConvexError`.
+
+## Purpose
+
+Use `requests.create.webRequest` to track which URLs a device accesses and optionally categorize those requests for later analysis or policy enforcement.
+
+In the frontend, `src/pages/Requests.tsx` calls this mutation through `useMutation(api.requests.create.webRequest)` to submit a new web request for the currently selected device, ensuring every recorded request is associated with a valid device record.

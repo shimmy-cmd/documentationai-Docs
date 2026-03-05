@@ -1,0 +1,20 @@
+---
+title: levels.policies.update
+description: Update a level's policy configuration in Convex, including categories and allow/block lists, after validating write permissions.
+---
+
+## Overview
+
+`levels.policies.update` updates policy-related configuration for a level in the Convex backend. It runs as a mutation in `convex/levels/policies.ts`, verifies the caller has write access with `ensureLevelWrite`, and then patches the level document with the new policy data.
+
+<Callout kind="info">
+
+Type: Mutation
+
+</Callout>
+
+The mutation updates key policy fields on the level record, including `policyCategories`, `allowlist`, `blocklist`, and `blueJayRules`. It uses `ctx.db.patch(level, rest)` to apply the provided changes to the existing level document.
+
+## Purpose
+
+Use `levels.policies.update` to save level-wide browser and policy configuration changes coming from the UI. On the frontend, the hook in `src/hooks/useLevelBrowserMode.ts` calls this mutation via `useMutation(api.levels.policies.update)` whenever a user adjusts level-level policy settings.

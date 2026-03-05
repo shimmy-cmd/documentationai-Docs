@@ -197,11 +197,85 @@
               },
               {
                 "group": "appCategories",
-                "pages": []
+                "pages": [
+                  {
+                    "title": "appCategories.list.categories",
+                    "path": "app-categories-list-categories",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/appCategories/list/categories",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  }
+                ]
               },
               {
                 "group": "devices",
-                "pages": []
+                "pages": [
+                  {
+                    "title": "devices.apps.install",
+                    "path": "devices-apps-install",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/devices/apps/install",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Mutation"
+                  },
+                  {
+                    "title": "devices.apps.update",
+                    "path": "devices-apps-update",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/devices/apps/update",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Mutation"
+                  },
+                  {
+                    "title": "devices.apps.getConfig",
+                    "path": "devices-apps-get-config",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/devices/apps/getConfig",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  },
+                  {
+                    "title": "devices.get.details",
+                    "path": "devices-get-details",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/devices/get/details",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  },
+                  {
+                    "title": "devices.policies.get",
+                    "path": "devices-policies-get",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/devices/policies/get",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  },
+                  {
+                    "title": "devices.policies.update",
+                    "path": "devices-policies-update",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/devices/policies/update",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Mutation"
+                  },
+                  {
+                    "title": "devices.restrictions.update",
+                    "path": "devices-restrictions-update",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/devices/restrictions/update",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Mutation"
+                  },
+                  {
+                    "title": "devices.restrictions.get",
+                    "path": "devices-restrictions-get",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/devices/restrictions/get",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  }
+                ]
               },
               {
                 "group": "groups",
@@ -213,23 +287,116 @@
               },
               {
                 "group": "levels",
-                "pages": []
+                "pages": [
+                  {
+                    "title": "levels.apps.update",
+                    "path": "levels-apps-update",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/levels/apps/update",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Mutation"
+                  },
+                  {
+                    "title": "levels.policies.update",
+                    "path": "levels-policies-update",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/levels/policies/update",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Mutation"
+                  },
+                  {
+                    "title": "levels.list.all",
+                    "path": "levels-list-all",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/levels/list/all",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  }
+                ]
               },
               {
                 "group": "requests",
-                "pages": []
+                "pages": [
+                  {
+                    "title": "requests.list.myAppRequests",
+                    "path": "requests-list-my-app-requests",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/requests/list/myAppRequests",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  },
+                  {
+                    "title": "requests.list.myWebRequests",
+                    "path": "requests-list-my-web-requests",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/requests/list/myWebRequests",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  },
+                  {
+                    "title": "requests.create.appRequest",
+                    "path": "requests-create-app-request",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/requests/create/appRequest",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Mutation"
+                  },
+                  {
+                    "title": "requests.create.webRequest",
+                    "path": "requests-create-web-request",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/requests/create/webRequest",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Mutation"
+                  }
+                ]
               },
               {
                 "group": "rules",
-                "pages": []
+                "pages": [
+                  {
+                    "title": "rules.list.all",
+                    "path": "rules-list-all",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/rules/list/all",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  }
+                ]
               },
               {
                 "group": "siteCategories",
-                "pages": []
+                "pages": [
+                  {
+                    "title": "siteCategories.list.categories",
+                    "path": "site-categories-list-categories",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/siteCategories/list/categories",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  }
+                ]
               },
               {
                 "group": "users",
-                "pages": []
+                "pages": [
+                  {
+                    "title": "users.get.byClerkId",
+                    "path": "users-get-by-clerk-id",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/users/get/byClerkId",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  },
+                  {
+                    "title": "users.get.byConvexId",
+                    "path": "users-get-by-convex-id",
+                    "openapi": "api-reference/convex-spec-1771945068335.yaml POST /api/run/users/get/byConvexId",
+                    "openapi-mode": "auto",
+                    "method": "POST",
+                    "badge": "Query"
+                  }
+                ]
               }
             ],
             "icon": "activity-square"

@@ -1,0 +1,18 @@
+---
+title: rules.list.all
+description: Query available rules from Convex for the restrictions UI, with authentication enforcement and pagination over the by_parent index.
+---
+
+## Overview
+
+`rules.list.all` returns a paginated list of rules from Convex, filtered and ordered by the `by_parent` index. The query enforces authentication with `ensureLoggedIn` and strips internal Convex fields like `_id` and `_creationTime` before returning results to the client.
+
+<Callout kind="info">
+
+**Type:** Query
+
+</Callout>
+
+## Purpose
+
+Use `rules.list.all` to load the set of rules that power restriction configuration in the app store experience. On the frontend, `src/hooks/useAppRestrictions.ts` calls this query via `usePaginatedQuery(api.rules.list.all, ...)` to fetch rules page by page and render them in the restrictions UI without exposing Convex-internal metadata.

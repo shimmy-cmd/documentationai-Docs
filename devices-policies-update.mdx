@@ -1,0 +1,28 @@
+---
+title: devices.policies.update
+description: Patch a device's browser and policy configuration, including category overrides, URL allow/block lists, and BlueJay rules.
+---
+
+## Overview
+
+`devices.policies.update` is a Convex mutation that updates a single device's policy configuration. It patches existing policy data with overrides instead of replacing the entire configuration.
+
+<Callout kind="info">
+
+Type: Mutation (`convex/devices/policies.ts`)
+
+</Callout>
+
+The mutation applies partial updates to a device's policy overrides, including category-level toggles, URL allow/block lists, and BlueJay rules, while leaving unspecified fields unchanged.
+
+## Purpose
+
+Use `devices.policies.update` to persist browser and policy changes for a specific device from the UI. In the frontend app, `src/hooks/useDeviceMutations.ts` exposes this mutation as `updatePolicies = useMutation(api.devices.policies.update)` so UI components can submit policy edits without handling Convex wiring directly.
+
+On the backend, the mutation merges the incoming payload into the device's existing configuration:
+
+- **Category overrides** — update a boolean map of categories (for example, content categories) that are explicitly allowed or blocked for this device.
+- **Allowed/blocked URLs** — adjust per-device URL allowlists and blocklists used by the browser.
+- **BlueJay rules** — patch BlueJay-specific rule configuration that controls additional device browsing behavior.
+
+This keeps device policies in sync with admin changes from the app-store browser and policy management UI while avoiding full document rewrites.

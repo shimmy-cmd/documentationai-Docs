@@ -1,0 +1,20 @@
+---
+title: users.get.byClerkId
+description: Resolve a Clerk user ID to the corresponding Convex user document ID using the users.get.byClerkId query.
+---
+
+## Overview
+
+`users.get.byClerkId` is a Convex query defined in `convex/users/get.ts` that looks up a user by the `by_clerk_id` index on the `users` table. It returns the matching user's Convex `_id`, or `null` when no user exists for the given Clerk user ID.
+
+<Callout kind="info">
+
+**Type:** Query
+
+</Callout>
+
+## Purpose
+
+Use `users.get.byClerkId` when you need to translate an authenticated Clerk user ID into the Convex user document ID used across your backend. This keeps Clerk as the identity provider while Convex stores your application-specific user data.
+
+On the frontend, the hook in `src/hooks/useUserDevice.ts` calls `useQuery(api.users.get.byClerkId, { clerkId })` to resolve the Clerk user to its Convex `_id`. Other Convex functions can then use that `_id` to associate devices, apps, and policies with the correct user record.

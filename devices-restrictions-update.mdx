@@ -1,0 +1,33 @@
+---
+title: devices.restrictions.update
+description: Convex mutation that updates a device’s restriction flags and propagates changes to Jamf configuration.
+---
+
+## Overview
+
+`devices.restrictions.update` updates restriction flags on a single device and synchronizes the change to Jamf.
+
+<Callout kind="info">
+
+Type: Mutation
+
+</Callout>
+
+This function lives in `convex/devices/restrictions.ts` and runs on the Convex backend. It validates the incoming restriction keys against the configured defaults, applies the updated boolean map to the device config, and then triggers a Jamf configuration change so the new restrictions take effect on the managed device.
+
+## Purpose
+
+Use `devices.restrictions.update` when you need to persist UI changes to a device’s restrictions and push them to Jamf in one atomic operation.
+
+On the backend, the mutation:
+
+- Reads the current restriction configuration for a device.
+- Validates each requested restriction key against the default restriction schema.
+- Writes the updated boolean map back to the device’s config.
+- Kicks off a Jamf configuration update so the device receives the new policy.
+
+On the frontend, `app-store-project` exposes this mutation through `src/hooks/useDeviceMutations.ts` as:
+
+- `updateRestrictions = useMutation(api.devices.restrictions.update)`
+
+Call this hook from your React components when a user toggles device restrictions, so the UI, Convex data, and Jamf configuration stay in sync.

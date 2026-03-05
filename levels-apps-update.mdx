@@ -1,0 +1,20 @@
+---
+title: levels.apps.update
+description: Convex mutation that updates app configuration on a level and propagates changes to Jamf when saving level-wide app settings.
+---
+
+## Overview
+
+`levels.apps.update` is a Convex mutation that updates app-related configuration for a specific level, including filters, allowed and blocked apps, and the level-wide app mode. It requires level write permission and, after applying changes, triggers a corresponding Jamf level change to keep device management in sync.
+
+<Callout kind="info">
+
+Type: Mutation
+
+</Callout>
+
+## Purpose
+
+Use `levels.apps.update` whenever you save changes to app configuration at the level scope, for example when adjusting which apps are allowed or blocked or when switching the level app mode. On the backend, the mutation lives in `convex/levels/apps.ts` and handles both the data update and the Jamf sync.
+
+On the frontend, the app-store project calls this mutation through `useMutation(api.levels.apps.update)` from `src/hooks/useLevelAppMode.ts`. That hook wires the UI for level-wide app settings so that when a user saves changes, the mutation persists the configuration and ensures Jamf reflects the new level state.

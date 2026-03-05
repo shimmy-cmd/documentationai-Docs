@@ -1,0 +1,30 @@
+---
+title: devices.restrictions.get
+description: Returns the effective restriction flags for a device by merging level policies with device-specific overrides.
+---
+
+## Overview
+
+`devices.restrictions.get` is a Convex query that returns the effective restriction map for a given device configuration. It reads the device config, verifies that the caller has read access to the device, loads the associated level, and then merges restrictions from both sources into a single map.
+
+<Callout kind="info">
+
+Type: Query
+
+</Callout>
+
+The returned map annotates each restriction with its origin and state: restrictions inherited from the level are marked with `key: "level"`, device-level overrides that enable a restriction are marked with `key: "device"`, and device-level overrides that explicitly disable a restriction are represented with `key: false`.
+
+## Purpose
+
+Use `devices.restrictions.get` to display or reason about the current restriction state for a device, after applying both level policies and any device-specific overrides. This ensures the UI and downstream logic work with the same merged view of restrictions that the backend enforces.
+
+On the frontend, the query is typically consumed with the Convex React hook:
+
+```ts
+const restrictions = useQuery(api.devices.restrictions.get, {
+  deviceConfig,
+})
+```
+
+In this usage, `deviceConfig` identifies the selected device configuration, and the hook returns the effective restrictions map ready for rendering in components like general restriction settings or summaries.

@@ -1,0 +1,22 @@
+---
+title: levels.list.all
+description: Convex query that paginates and returns all levels for support users, used by the frontend user level flow.
+---
+
+## Overview
+
+`levels.list.all` is a Convex **query** that paginates and returns all levels defined in your backend, omitting the `_creationTime` field from the results. The function is implemented in `convex/levels/list.ts` and enforces that the caller has support role permissions before returning any data.
+
+<Callout kind="info">
+
+Type: Query
+
+</Callout>
+
+The query is designed to be used from the frontend via Convex's `useQuery` hook or equivalent client calls, and it returns a paginated list so you can efficiently render or process many levels without loading the entire dataset at once.
+
+## Purpose
+
+Use `levels.list.all` when you need a complete, paginated view of all levels available in the system, restricted to users with support-level access. This is typically part of internal or admin tooling rather than end-user flows.
+
+In the `app-store-project` frontend, `src/hooks/useUserLevel.ts` calls `useQuery(api.levels.list.all, ...)` to load the available levels for the current user flow. That hook then drives any UI that depends on the set of levels, such as displaying user eligibility, configuring level-specific behavior, or validating level-related actions.

@@ -1,0 +1,29 @@
+---
+title: devices.get.details
+description: Convex query that returns detailed device information, including related user fields and level metadata, for frontend configuration flows.
+---
+
+## Overview
+
+`devices.get.details` is a Convex **query** defined in `convex/devices/get.ts` that returns a rich view of a single device. The result combines core device fields with associated user and level information so frontend hooks can render configuration- and user-specific UI from one call.
+
+<Callout kind="info">
+
+Type: Query — `devices.get.details` is a read-only Convex query and never mutates device or user state.
+
+</Callout>
+
+## Purpose
+
+Use `devices.get.details` whenever you need complete, UI-ready data for a specific device rather than raw device records.
+
+On the backend, this query fetches:
+
+- Device details such as serial, code, `deviceConfig`, and adBlock status.
+- Related user information, including name, email, and phone.
+- The associated level name for the device.
+
+On the frontend, the app-store project uses this query via `useQuery(api.devices.get.details, ...)` in two main hooks:
+
+- `src/hooks/useDeviceConfig.ts` loads device details to compute and display the device configuration and related UI state.
+- `src/hooks/useUserDevice.ts` loads the currently active or selected device for the signed-in user, so other components can rely on a single, shared source of truth for device details.

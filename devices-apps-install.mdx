@@ -1,0 +1,18 @@
+---
+title: devices.apps.install
+description: Install a specific app on a device via Convex and trigger a Jamf configuration update, as used by the App Store UI.
+---
+
+## Overview
+
+`devices.apps.install` installs a selected app on a specific device and updates its Jamf configuration.
+
+<Callout kind="info">
+
+Type: **Mutation** — this function writes to the Convex backend and changes device app state.
+
+</Callout>
+
+## Purpose
+
+Use `devices.apps.install` to persist that a given app should be installed on a device identified by its serial number. The mutation is defined in `convex/devices/apps.ts`, where it writes the device–app association to backend storage (for example, a `deviceApps` collection or similar). As part of the same operation, it triggers a Jamf configuration update so the device management system applies the new app install policy. On the frontend, the App Store experience in `src/components/AppDetailHeader.tsx` calls this mutation with `useMutation(api.devices.apps.install)` to install the currently viewed app onto the device the user has selected.

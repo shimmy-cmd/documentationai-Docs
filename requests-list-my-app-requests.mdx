@@ -1,0 +1,24 @@
+---
+title: requests.list.myAppRequests
+description: Query app requests for a specific device by serial and paginate them for display in the Requests page.
+---
+
+## Overview
+
+`requests.list.myAppRequests` is a Convex query defined in `convex/requests/list.ts` that returns app requests associated with a specific device. It resolves the device by its `serial` using the `by_serial` index, then paginates related `appRequests` using the `by_device` index and strips internal Convex fields like `_id` and `_creationTime` before returning the results.
+
+<Callout kind="info">
+
+**Type: Query** — `requests.list.myAppRequests` is a read-only Convex query that supports pagination.
+
+</Callout>
+
+## Purpose
+
+Use `requests.list.myAppRequests` to back the Requests view for a device, fetching only the app requests tied to that device. In the frontend, the Requests page calls this query with:
+
+```ts
+usePaginatedQuery(api.requests.list.myAppRequests, { serial })
+```
+
+This pattern keeps device app-request history in sync with Convex while avoiding exposure of internal Convex document metadata.

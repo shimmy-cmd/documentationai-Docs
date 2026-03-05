@@ -1,0 +1,30 @@
+---
+title: devices.apps.update
+description: Convex mutation that updates a device's app configuration and pushes the new settings to Jamf.
+---
+
+## Overview
+
+`devices.apps.update` updates a single device's app configuration in the Convex backend and then propagates those changes to Jamf. It runs as a Convex mutation defined in `convex/devices/apps.ts`, so it modifies stored device state and triggers side effects.
+
+<Callout kind="info">
+
+Type: Mutation — `devices.apps.update` performs a write operation and pushes an updated configuration to Jamf.
+
+</Callout>
+
+## Purpose
+
+Use `devices.apps.update` to keep a device's app setup in sync between your UI, Convex, and Jamf:
+
+- **Device configuration**: Updates the device's `deviceConfig` for all app-related settings, including:
+  - App mode (for example, which usage mode the device is in)
+  - App filters by category
+  - Allowed app lists
+  - Blocked app lists
+- **Jamf integration**: After updating `deviceConfig`, it triggers a Jamf configuration change so the device enforces the new app rules.
+
+On the frontend, the mutation is wired into shared hooks so UI changes flow straight to the backend:
+
+- `src/hooks/useDeviceAppMode.ts` uses `useMutation(api.devices.apps.update)` to apply app-mode-related changes from the app store UI to the device.
+- `src/hooks/useDeviceMutations.ts` exposes `updateApps = useMutation(api.devices.apps.update)` as a reusable mutation for any feature that needs to update a device's app configuration.
