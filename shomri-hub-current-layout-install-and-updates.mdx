@@ -9,6 +9,8 @@ The App Detail page shows information from the App Store and lets the user start
 
 The page fetches metadata from the iTunes Search API through a backend proxy, then exposes it via the `useAppStoreDetails` hook. That data powers the app name, icon, rating, and other App Store fields you see in the detail view.
 
+<span id="uses-api-devices-apps-install" />After the user initiates an install from App Detail, Shomri Hub persists the install intent and device-app state by calling `api.devices.apps.install` ([API docs](/devices-apps-install)) so the backend can track and reconcile the install with App Store results.
+
 When the user taps **Install** on the App Detail page, the frontend calls `showSKOverlay(appStoreId)`. This function goes through a Swift bridge that presents the native SKOverlay for the given App Store app identifier. The user then completes the install in the overlay, using their normal App Store account and flows.
 
 After the user dismisses the SKOverlay, the bridge sends a callback so the React state can reset. The App Detail page clears the "install in progress" state and returns to the normal view, ready to reflect the updated app status once the backend sees the new install.
@@ -18,6 +20,10 @@ After the user dismisses the SKOverlay, the bridge sends a callback so the React
 All installs and updates in Shomri Hub use the native SKOverlay flow from the App Store, triggered from the web UI through a Swift bridge.
 
 </Callout>
+
+## Installed apps review
+
+<span id="uses-api-apps-list-all-on-device-with-status" />To review what is already on the device, the hub loads the installed-app list with allow and block status by calling `api.apps.list.allOnDeviceWithStatus` ([API docs](/apps-list-all-on-device-with-status)), which lets the UI show both inventory and policy state for each app.
 
 ## Updates page
 

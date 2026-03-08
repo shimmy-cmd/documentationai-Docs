@@ -171,6 +171,8 @@ Because missing categories default to allowed, UI code that renders the category
 
 ## Write-time mutation contract (useDeviceMutations.updateAppSettings)
 
+<a id="uses-api-devices-apps-update"></a>App Management changes persist by calling the `api.devices.apps.update` mutation; see the API reference at [`devices.apps.update`](/devices-apps-update).
+
 To persist App Management changes, the current layout uses a mutation helper like `useDeviceMutations.updateAppSettings`. This mutation does not merge with existing state; it **replaces** the entire app management config segment.
 
 The mutation payload has a write-optimized shape:

@@ -31,6 +31,12 @@ The App Store home page aggregates multiple backend sources before showing any a
 - <a id="uses-api-apps-list-updates"></a> **`api.apps.list.updates`**  
   An action used by the Updates view to query which apps have newer versions available. The App Store home page uses this when showing update badges or the Updates section. [API docs](/appscheesepiiza)
 
+- <a id="uses-api-app-categories-list-categories"></a> **`api.appCategories.list.categories`**  
+  A query that returns the full set of app categories available in the catalog. The App Store home page uses these categories to group apps, drive category filters, and render the category navigation for discovery. [API docs](/app-categories-list-categories)
+
+- <a id="uses-api-apps-get-apps"></a> **`api.apps.get.apps`**  
+  A detail query that fetches full records for specific apps by ID. Use this when the App Store needs up-to-date metadata, icons, or descriptions for a subset of apps, such as featured rows or deep links from search. [API docs](/apps-get-apps)
+
 These sources are combined on the client so the user sees a single, coherent list of apps and updates across both dynamic and static rules.
 
 ## Merging and filtering
