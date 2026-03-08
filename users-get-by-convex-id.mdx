@@ -3,6 +3,10 @@ title: users.get.byConvexId
 description: Query Convex for all devices belonging to a specific user, returning their device IDs and display names for use in frontend hooks and UI.
 ---
 
+## Used in
+
+- Identity and device resolution → Identity resolution chain step for `api.users.get.byConvexId` in [Shomri Hub Current Layout: Identity and Device](/shomri-hub-current-layout-identity-and-device#uses-api-users-get-by-convex-id)
+
 ## Overview
 
 `users.get.byConvexId` is a Convex query defined in `convex/users/get.ts` that returns all devices associated with a given user ID. It looks up devices using the `by_user` index and returns an array of objects shaped as `{ deviceId, deviceName }`.

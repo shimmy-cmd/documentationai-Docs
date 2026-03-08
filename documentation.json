@@ -27,6 +27,11 @@
                     "icon": "home"
                   },
                   {
+                    "title": "What is Shomri?",
+                    "path": "what-is-shomri",
+                    "icon": "info"
+                  },
+                  {
                     "title": "Quickstart",
                     "path": "quickstart",
                     "icon": "zap"
@@ -45,19 +50,65 @@
                     "path": "home-page"
                   },
                   {
-                    "title": "Apps Section",
-                    "path": "apps"
-                  },
-                  {
                     "title": "Browser Page",
                     "path": "browser-page"
-                  },
-                  {
-                    "title": "Contact Page",
-                    "path": "contact-page"
                   }
                 ],
                 "openapi": "api-reference/convex-spec-1771945068335.yaml"
+              },
+              {
+                "group": "Shomri Hub Current Layout",
+                "pages": [
+                  {
+                    "group": "Settings",
+                    "pages": [
+                      {
+                        "title": "Settings: Browser Policies",
+                        "path": "shomri-hub-current-layout-settings-browser-policies"
+                      },
+                      {
+                        "title": "Settings: General Restrictions",
+                        "path": "shomri-hub-current-layout-settings-general-restrictions"
+                      },
+                      {
+                        "title": "Settings: Levels",
+                        "path": "shomri-hub-current-layout-settings-levels"
+                      },
+                      {
+                        "title": "Settings: App Management",
+                        "path": "shomri-hub-current-layout-settings-app-management"
+                      }
+                    ]
+                  },
+                  {
+                    "title": "Architecture",
+                    "path": "shomri-hub-current-layout-architecture"
+                  },
+                  {
+                    "title": "App Store",
+                    "path": "shomri-hub-current-layout-app-store"
+                  },
+                  {
+                    "title": "Install and Updates",
+                    "path": "shomri-hub-current-layout-install-and-updates"
+                  },
+                  {
+                    "title": "External Services",
+                    "path": "shomri-hub-current-layout-external-services"
+                  },
+                  {
+                    "title": "Identity and Device",
+                    "path": "shomri-hub-current-layout-identity-and-device"
+                  },
+                  {
+                    "title": "Requests",
+                    "path": "shomri-hub-current-layout-requests"
+                  },
+                  {
+                    "title": "Roles",
+                    "path": "shomri-hub-current-layout-roles"
+                  }
+                ]
               }
             ]
           },

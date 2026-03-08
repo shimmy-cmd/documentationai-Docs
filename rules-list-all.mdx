@@ -3,6 +3,10 @@ title: rules.list.all
 description: Query available rules from Convex for the restrictions UI, with authentication enforcement and pagination over the by_parent index.
 ---
 
+## Used in
+
+- Not referenced in Shomri Hub docs yet.
+
 ## Overview
 
 `rules.list.all` returns a paginated list of rules from Convex, filtered and ordered by the `by_parent` index. The query enforces authentication with `ensureLoggedIn` and strips internal Convex fields like `_id` and `_creationTime` before returning results to the client.

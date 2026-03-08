@@ -1,0 +1,208 @@
+---
+title: General restrictions settings
+description: Understand how Shomri Hub reads iOS MDM restriction flags, how the restrictions record is shaped, and how unknown keys are surfaced in the UI.
+---
+
+## General restrictions overview
+
+General restrictions surface iOS MDM restriction flags for a device or level as a single restrictions record, derived from `api.devices.restrictions.get` using the current `deviceConfig`. <a id="uses-api-devices-restrictions-get"></a>[API docs](/devices-restrictions-get)
+
+<Callout kind="info">
+
+The General Restrictions UI in the current Shomri Hub layout is marked **Coming Soon** and is partially stubbed. The backend wiring described here is active; treat the UI as a read-only visualization of the restrictions record until further iterations.
+
+</Callout>
+
+## Data source and query pattern
+
+Restrictions are read from the `api.devices.restrictions.get` query in the API layer. The query requires a `deviceConfig` so the backend can resolve which policies and levels apply to this device.
+
+At a high level, the flow for the current layout is:
+
+- Resolve or construct `deviceConfig` for the selected device.
+- Call `api.devices.restrictions.get` with that `deviceConfig`.
+- Render the returned restrictions record into the General Restrictions UI.
+
+When the query succeeds, the UI reads the returned record and renders each key into the General Restrictions section. When the UI is not yet fully implemented, you should still expect the data to be available from the backend.
+
+## Restrictions record shape
+
+The restrictions response is a flat record: `Record<restrictionKey, "device" | "level" | false>`.
+
+Each restriction key maps to one of three values:
+
+- `"device"` — the restriction is applied directly at the device level.
+- `"level"` — the restriction is inherited from a level.
+- `false` — the restriction is not active.
+
+<Callout kind="info">
+
+The record is intentionally typed as `Record<string, "device" | "level" | false>` in many places so that new restriction keys can flow through without backend changes. Known keys are treated specially by the UI; unknown keys are still rendered, but with a generic label.
+
+</Callout>
+
+### Type modeling
+
+```ts
+type RestrictionSource = "device" | "level" | false;
+
+type RestrictionsRecord = Record<string, RestrictionSource>;
+```
+
+You typically treat this as a dynamic map: check for truthiness to know whether the restriction is active, and then branch on `"device"` or `"level"` for attribution and UI labeling.
+
+## Known restriction keys
+
+The current implementation recognizes a fixed set of well-known restriction keys and gives each of them a stable label and placement in the UI.
+
+All of these keys share the same location and type characteristics, so you can document them with `body`-scoped fields that hide the location badge.
+
+<ParamField body="allowAssistant" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls access to the system voice assistant. `"device"` or `"level"` means the assistant is restricted at that scope; `false` means the assistant is allowed.
+
+</ParamField>
+
+<ParamField body="allowCamera" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls use of the device camera. `"device"` or `"level"` indicates the camera is blocked according to the corresponding policy; `false` means the camera is not restricted.
+
+</ParamField>
+
+<ParamField body="allowScreenShot" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls whether users can capture screenshots. Truthy values indicate screenshots are disallowed by the given scope; `false` allows screenshots.
+
+</ParamField>
+
+<ParamField body="allowExplicitContent" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls whether explicit content is blocked in supported services (media, search, etc.). `"device"` or `"level"` means explicit content is restricted; `false` means it is not.
+
+</ParamField>
+
+<ParamField body="allowBookstoreErotica" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls whether erotica content from the bookstore is allowed. Truthy values indicate erotica is blocked by that scope; `false` allows it.
+
+</ParamField>
+
+<ParamField body="forceAppStoreRating" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls whether the App Store content rating is enforced. `"device"` or `"level"` means rating limits come from that scope; `false` means there is no enforced rating from this layer.
+
+</ParamField>
+
+<ParamField body="allowInAppPurchases" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls whether in-app purchases are allowed. Truthy values indicate in-app purchases are blocked by the given scope; `false` allows them.
+
+</ParamField>
+
+<ParamField body="allowVideoConferencing" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls whether video conferencing apps and features are allowed. `"device"` or `"level"` means they are restricted; `false` means they are allowed.
+
+</ParamField>
+
+<ParamField body="allowYouTube" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls whether YouTube access is allowed. A truthy value means YouTube is blocked by that scope; `false` allows it.
+
+</ParamField>
+
+<ParamField body="allowSafari" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls whether Safari is available on the device. `"device"` or `"level"` means Safari is blocked; `false` means Safari is allowed.
+
+</ParamField>
+
+<ParamField body="allowAirDrop" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls whether AirDrop is available. Truthy values indicate AirDrop is restricted by that scope; `false` allows AirDrop.
+
+</ParamField>
+
+<ParamField body="allowPasscodeModification" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+
+Controls whether users can modify the device passcode. `"device"` or `"level"` means passcode changes are blocked at that scope; `false` allows modifications.
+
+</ParamField>
+
+## Handling unknown restriction keys
+
+The backend may return additional restriction keys that are not part of the known list above. Rather than dropping them, the UI formats these keys into human-readable titles and renders them in the same General Restrictions section.
+
+Typical formatting logic:
+
+- Split the key by case or separators (for example, `allowSomeNewFlag`).
+- Insert spaces between words (`Allow Some New Flag`).
+- Optionally trim known prefixes like `allow` or `force` for display-only purposes.
+
+```ts
+function formatRestrictionKey(key: string): string {
+  // Basic example: convert allowSomeNewFlag -> Allow Some New Flag
+  const withSpaces = key.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+  const capitalized =
+    withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+
+  return capitalized;
+}
+```
+
+When you render unknown keys:
+
+- Use `formatRestrictionKey(key)` as the label.
+- Use the `"device" | "level" | false` value for both state (active vs inactive) and attribution (device vs level).
+
+This keeps the UI forward-compatible with new MDM flags without requiring a code change for every new key.
+
+## UI behavior and write semantics
+
+The current General Restrictions section in Shomri Hub is focused on **reading and surfacing** the restrictions record. The UI shows a banner labeled **Coming Soon** to indicate that write interactions are not final.
+
+You should treat the General Restrictions UI as:
+
+- **Read-only for the restrictions record**: reflect what `api.devices.restrictions.get` returns.
+- **UI-first**: avoid encoding assumptions about which backend mutation or policy system will eventually own writes.
+
+Intentionally avoid binding to a specific write endpoint or policy model from this page; the exact write path is an implementation detail that may change as the General Restrictions UI matures.
+
+## Related links
+
+<Columns cols={3}>
+
+<Card
+  title="Settings overview"
+  href="/shomri-hub-current-layout-settings"
+  icon="settings"
+  cta="Understand all settings panes"
+>
+
+High-level description of how Settings is structured in the current Shomri Hub layout, including where General Restrictions fits.
+
+</Card>
+
+<Card
+  title="Levels"
+  href="/shomri-hub-current-layout-settings-levels"
+  icon="bar-chart"
+  cta="Review level-based policies"
+>
+
+Details on levels and how they contribute policies that show up as `"level"` in the restrictions record.
+
+</Card>
+
+<Card
+  title="Identity and Device"
+  href="/shomri-hub-current-layout-identity-and-device"
+  icon="users"
+  cta="See how deviceConfig is built"
+>
+
+Explanation of identity, device resolution, and how `deviceConfig` is assembled before calling restrictions and other device APIs.
+
+</Card>
+
+</Columns>

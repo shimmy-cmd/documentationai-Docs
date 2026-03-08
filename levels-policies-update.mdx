@@ -3,6 +3,10 @@ title: levels.policies.update
 description: Update a level's policy configuration in Convex, including categories and allow/block lists, after validating write permissions.
 ---
 
+## Used in
+
+- Not referenced in Shomri Hub docs yet.
+
 ## Overview
 
 `levels.policies.update` updates policy-related configuration for a level in the Convex backend. It runs as a mutation in `convex/levels/policies.ts`, verifies the caller has write access with `ensureLevelWrite`, and then patches the level document with the new policy data.

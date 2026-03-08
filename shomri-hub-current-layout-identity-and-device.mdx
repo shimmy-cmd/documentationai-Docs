@@ -1,0 +1,272 @@
+---
+title: Identity and device resolution
+description: Understand how Shomri Hub resolves the current user identity and device serial, including edge cases and the DeviceSerialGate behavior.
+---
+
+## Identity types
+
+Each device stores a set of associated users in `device.associatedUsers[]`. Each associated user record links a Convex user to a single **identity string** that drives permissions and UI behavior.
+
+The identity types are:
+
+- **Authority identities** (can change device settings directly):
+  - `parent`
+  - `mentor`
+  - `admin`
+  - `supervisor`
+  - `organization`
+  - `self-managed`
+
+- **Read-only identities** (cannot change device settings directly):
+  - `child`
+  - `mentee`
+
+If the app cannot match the Convex user to any `associatedUsers[].identity` value, or the identity string is missing or unknown, the session defaults to a **restricted identity** with read-only behavior.
+
+<Callout kind="info">
+
+Treat unknown, empty, or mismatched identities as restricted. The UI should assume read-only behavior and require an authority identity to approve or apply changes.
+
+</Callout>
+
+## Identity resolution chain
+
+Shomri Hub resolves the current user identity by walking a deterministic chain from Clerk, through Convex, and finally into the device`s `associatedUsers[]` list.
+
+The identity resolution flow is:
+
+1. **Clerk ID: `clerkId`**  
+   Start from the authenticated Clerk user identifier exposed by the auth layer.
+
+2. **Look up Convex user: `api.users.get.byClerkId`** <a id="uses-api-users-get-by-clerk-id"></a>  
+   Call the Convex query `api.users.get.byClerkId` with `clerkId`.  
+   This returns a Convex user record, including its Convex user ID (`convexUserId`).  
+   See [API docs](/users-get-by-clerk-id).
+
+3. **Extract `convexUserId`**  
+   Read the Convex user ID from the user record. This ID is the bridge from Clerk into the Shomri data model.
+
+4. **Load device and associations: `api.users.get.byConvexId`** <a id="uses-api-users-get-by-convex-id"></a>  
+   Call `api.users.get.byConvexId` with `convexUserId`.  
+   This query loads:
+   - The Convex user
+   - The device for this session
+   - The `associatedUsers[]` array for that device  
+
+   See [API docs](/users-get-by-convex-id).
+
+5. **Match `associatedUsers[]` to current user**  
+   Walk `device.associatedUsers[]` and find the entry where `associatedUser.userId` equals the current `convexUserId`.
+
+6. **Resolve identity string**  
+   Use the matching record`s `identity` string (`parent`, `mentor`, `child`, and so on) as the **current identity** for authorization checks and UI decisions.
+
+If the chain cannot find a matching associated user, the app treats the identity as unknown and falls back to the restricted behavior described above.
+
+<Callout kind="info">
+
+The app uses the resolved identity string as the single source of truth for authority vs read-only behavior. Avoid duplicating role logic elsewhere; always derive permissions from the identity resolved through `associatedUsers[]`.
+
+</Callout>
+
+## Permissions derived from identity
+
+Once the app has an identity string, it derives per-session permissions, including whether the user can make direct changes to the device.
+
+The key derived flag is:
+
+- **`canChangeDirectly`** — whether the current identity can apply settings changes without approval.
+
+### Identities with `canChangeDirectly = true`
+
+Authority identities can apply changes directly:
+
+- `parent`
+- `mentor`
+- `admin`
+- `supervisor`
+- `organization`
+- `self-managed`
+
+For these identities, the Settings UI submits the underlying Convex mutations immediately when the user changes a control.
+
+### Identities with `canChangeDirectly = false`
+
+Read-only identities cannot apply changes directly:
+
+- `child`
+- `mentee`
+- Any unknown or empty identity string
+
+For these identities:
+
+- The Settings UI **does not** fire the Convex mutation that would change the device or its policies.
+- Instead, when the user attempts to change a controlled value, the UI:
+  - Shows a toast message such as `Request Submitted`.
+  - Records the intent as a request (for example, to be handled in the Requests and approvals flows).
+  - Leaves the actual device settings unchanged until an authority identity approves them.
+
+This pattern keeps the behavior consistent across the app: **authority identities change state; read-only identities create requests.**
+
+<Callout kind="info">
+
+Always derive `canChangeDirectly` from the identity string, not from UI context. Mismatches between identity-derived permissions and UI expectations are a common source of confusing behavior for mentees and children.
+
+</Callout>
+
+## Mentee edge case
+
+Some mentees do not yet have a Clerk-to-Convex mapping, which means the standard identity chain cannot complete.
+
+In this case:
+
+- The Clerk user exists, but `api.users.get.byClerkId` returns a record where `convexUserId` is `null`, or there is no Convex user at all.
+- Because there is no valid `convexUserId`, the app **skips** the lookup via `api.users.get.byConvexId`.
+- Without `api.users.get.byConvexId`, there is no `deviceConfig` record attached to the session, so `deviceConfig` remains `null`.
+
+However, the device serial still resolves independently (see the device resolution section below), so:
+
+- Device-scoped app queries that depend **only on the serial** still run.  
+  For example, the paginated app list query can load apps as long as it has a valid device serial.
+- Features that rely on `deviceConfig` (for example, some device-level policies or saved preferences) do not load until the Convex mapping exists.
+
+The mentee experience in this edge case is:
+
+- Apps still show up and can be requested because the serial is available.
+- Settings and higher-privilege operations remain constrained because the identity cannot be fully resolved.
+
+<Callout kind="info">
+
+When `convexUserId` is missing, treat the session as a restricted, read-only identity even if the device serial is known. Use the resolved serial for app listing and requests, but do not infer authority without an explicit identity mapping.
+
+</Callout>
+
+## Device resolution
+
+The device serial is the primary key for device-scoped behavior in the current layout. Many queries and policies depend on having a valid serial, even when the identity chain is incomplete.
+
+Device serial resolution runs independently of identity and follows a strict priority order. The first valid serial wins and short-circuits the rest.
+
+### Resolution priority
+
+The app resolves the device serial in this order:
+
+1. **Native window or meta header**
+
+   - If the browser window exposes `window.__DEVICE_SERIAL__`, use that value.
+   - Otherwise, check for a meta tag with `name="x-device-serial"` and use its `content` value.
+
+2. **Query parameter: `?cx__serial=`**
+
+   If no valid serial was resolved from window or meta, check the URL query string for the `cx__serial` parameter. A non-empty value here becomes the candidate serial.
+
+3. **Convex device lookup: `api.devices.get.details`** <a id="uses-api-devices-get-details"></a>
+
+   If a device context is already present in the app, call `api.devices.get.details` and read `device.serial` from the response. Use this value when it passes validation. See [API docs](/devices-get-details).
+
+4. **URL path segment: `/[:deviceId]`**
+
+   If the URL includes a path segment that looks like a device identifier (for example, `/ABC12345`), check whether it is a valid serial. The app validates candidate segments with a regular expression and only accepts serial-like values.
+
+5. **`DeviceContext.selectedDevice.serial`**
+
+   If no earlier source produced a serial, inspect the in-memory `DeviceContext`. If `DeviceContext.selectedDevice.serial` holds a valid serial from earlier in the session, reuse it.
+
+6. **`localStorage.device_serial`**
+
+   As a last resort, read `device_serial` from `localStorage`. If it is valid, it becomes the serial for this load.
+
+### Serial validation
+
+Every candidate serial from the sources above is validated against the regular expression:
+
+```bash
+^[A-Z0-9]{8,20}$
+```
+
+Under this rule:
+
+- Only uppercase letters and digits are allowed.
+- The serial must be between 8 and 20 characters long.
+- Common route names like `apps`, `settings`, or `home` are rejected automatically.
+
+If no source produces a value that matches this pattern, device serial resolution fails and the app cannot safely render device-scoped views.
+
+<Callout kind="info">
+
+Treat validation failure as a hard stop for device-scoped behavior. Do not try to infer a serial from route names or other heuristics; rely on the strict pattern so that non-device routes never masquerade as devices.
+
+</Callout>
+
+## Two important device IDs
+
+The current layout uses two distinct identifiers for a device. Mixing them up leads to subtle bugs, especially around reads versus writes.
+
+The two IDs are:
+
+- **`deviceId`** — the Convex document ID for the device (for example, `device._id` or the JavaScript-serialized document ID).  
+  Use `deviceId` for:
+  - **Write** operations (mutations) that need to update a specific device document.
+  - Linking to device-level mutations in the `devices.*` endpoint family.
+
+- **`deviceConfig`** — the configuration identifier for the device (for example, `device.deviceConfig`).  
+  Use `deviceConfig` for:
+  - **Read** queries that load configuration for the device.
+  - Fetching app lists, policies, and other device configuration that is shared across many reads.
+
+<Callout kind="info">
+
+Remember: `deviceId` is for writes, `deviceConfig` is for reads. Always confirm that a query or mutation is using the correct ID; passing `deviceConfig` into a write mutation or `deviceId` into a config query will either fail or pull the wrong data.
+
+</Callout>
+
+## DeviceSerialGate
+
+`DeviceSerialGate` is a top-level guard component that ensures the app never renders device-scoped content without a valid, validated device serial.
+
+`DeviceSerialGate`:
+
+- Runs the **device serial resolution order** on mount.
+- Validates each candidate serial against the strict regular expression.
+- Stores the resolved serial in `DeviceContext` and, when appropriate, in `localStorage`.
+- Allows the rest of the app to render only when a valid serial exists.
+
+When `DeviceSerialGate` cannot resolve a valid serial from any source, it:
+
+- **Blocks the entire app UI** instead of letting downstream components guess.
+- Renders a dedicated `NoDeviceError` view that explains the missing or invalid device state and avoids undefined behavior.
+
+This keeps all device-dependent logic behind a single, predictable gate and ensures that identity- and serial-based decisions always have a consistent foundation.
+
+<Callout kind="info">
+
+`DeviceSerialGate` is the outermost contract for device safety. Keep all device-scoped routes and components behind it so they never execute with an undefined or invalid serial.
+
+</Callout>
+
+## Related
+
+<Columns cols={3}>
+
+<Card
+  title="Roles in the current Shomri Hub layout"
+  href="/shomri-hub-current-layout-roles"
+  icon="users"
+  cta="Understand roles"
+/>
+
+<Card
+  title="Settings behavior in the current layout"
+  href="/shomri-hub-current-layout-settings"
+  icon="settings"
+  cta="See how settings apply"
+/>
+
+<Card
+  title="Requests and approvals"
+  href="/shomri-hub-current-layout-requests"
+  icon="inbox"
+  cta="Review request flows"
+/>
+
+</Columns>

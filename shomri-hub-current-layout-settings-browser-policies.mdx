@@ -1,0 +1,311 @@
+---
+title: Browser policies settings
+description: Understand how browserMode, BlueJay rules, NSFW levels, and list normalization work for Browser Policies in the Shomri Hub current layout.
+---
+
+## Browser policies in the current layout
+
+Browser Policies control whether the in-app browser is disabled, category-filtered, or whitelist-only, and how BlueJay evaluates specific URLs.
+
+This page focuses on the runtime shape of `browserMode`, `blueJayRules`, and the helper utilities used by the current Shomri Hub layout.
+
+## Browser modes and BlueJay mapping
+
+Browser Policies use a `browserMode` selector plus an optional `blueJayRules` object. The three valid modes are:
+
+- **Filtered Browser** — allow browsing, block selected categories.
+- **Whitelisted Browser** — allow only explicitly whitelisted sites.
+- **No Browser** — disable the browser entirely.
+
+### Filtered Browser
+
+Filtered Browser corresponds to a category-based filter with a fully populated BlueJay configuration.
+
+- `browserMode` is `"categories"`.
+- `blueJayRules` is a non-null object.
+
+```ts
+type BrowserMode = "categories" | "whitelist" | "none"
+
+interface BlueJayRules {
+  categories: string[]            // blocked categories, not allowed ones
+  allowlist: string[]             // allowed hostnames / URLs
+  blocklist: string[]             // blocked hostnames / URLs
+  config: {
+    nsfwLevel: "light" | "medium" | "strict"
+    human: boolean
+    accuracy: number
+  }
+}
+
+interface BrowserPolicyState {
+  browserMode: BrowserMode
+  blueJayRules: BlueJayRules | false | null | undefined
+}
+```
+
+When `browserMode` is `"categories"`, the UI shows a Filtered Browser and reads `blueJayRules.categories` to decide which categories to block.
+
+<Callout kind="info">
+
+The `categories` array on `blueJayRules` represents **blocked categories**, not allowed ones. BlueJay treats any category in `categories` as denied, and implicitly allows categories that are not listed.
+
+</Callout>
+
+### Whitelisted Browser
+
+Whitelisted Browser keeps the same overall structure but blocks all categories and relies on per-site allowlisting.
+
+- `browserMode` is `"whitelist"`.
+- `blueJayRules` is a non-null object where **all known categories are treated as blocked**.
+- `blueJayRules.allowlist` becomes the primary control for what can load.
+
+A typical runtime shape looks like:
+
+```ts
+const browserPolicy: BrowserPolicyState = {
+  browserMode: "whitelist",
+  blueJayRules: {
+    categories: allCategoryIds, // e.g. every site category your backend exposes
+    allowlist: ["khanacademy.org", "wikipedia.org"],
+    blocklist: [],
+    config: {
+      nsfwLevel: "strict",
+      human: true,
+      accuracy: 0.9
+    }
+  }
+}
+```
+
+The Whitelisted Browser mode depends on the convention that `categories` is “blocked”, so “all categories blocked + specific hostnames in `allowlist`” yields a strict whitelist.
+
+### No Browser
+
+No Browser disables all browsing for the device or level and ignores BlueJay configuration entirely.
+
+- `browserMode` is `"none"`.
+- `blueJayRules` is **false, undefined, or null**.
+
+```ts
+const browserPolicy: BrowserPolicyState = {
+  browserMode: "none",
+  blueJayRules: false
+}
+```
+
+When `browserMode` is `"none"`, the current layout should not attempt to read `blueJayRules` and should render the browser UI as unavailable.
+
+## BlueJay rules structure
+
+The `blueJayRules` object holds all configuration needed to evaluate URLs and categories.
+
+### Top-level BlueJay rules fields
+
+Use these fields consistently across Filtered and Whitelisted modes.
+
+<ParamField body="categories" param-type="string[]" required="true" show-location="false">
+
+Array of category identifiers that should be **blocked**. Any category present here is denied; categories not present are allowed. In Whitelisted mode this is typically the full set of available categories.
+
+</ParamField>
+
+<ParamField body="allowlist" param-type="string[]" required="true" show-location="false">
+
+Normalized list of allowed sites. Values are lowercased hostnames or URL-like strings derived via `getSiteNames`. When the browser evaluates a URL, it checks if its normalized host appears in this list.
+
+</ParamField>
+
+<ParamField body="blocklist" param-type="string[]" required="true" show-location="false">
+
+Normalized list of explicitly blocked sites. Values follow the same normalization as `allowlist`. If a URL matches both `allowlist` and `blocklist`, your evaluation logic should consistently pick one precedence rule and apply it everywhere.
+
+</ParamField>
+
+<ParamField body="config" param-type="{ nsfwLevel: string; human: boolean; accuracy: number }" required="true" show-location="false">
+
+Extra configuration that BlueJay uses when scoring content for NSFW or unsafe material. See the nested config fields below.
+
+</ParamField>
+
+### Config fields
+
+The `config` object tunes how aggressively BlueJay blocks content.
+
+<ParamField body="config.nsfwLevel" param-type="'light' | 'medium' | 'strict'" required="true" show-location="false">
+
+NSFW sensitivity preset:
+
+- `light` — blocks explicit adult content and pornography.
+- `medium` — blocks everything from `light` plus provocative imagery and mature themes.
+- `strict` — blocks everything from `medium` plus bikinis, swimwear, revealing clothing, and any suggestive content.
+
+</ParamField>
+
+<ParamField body="config.human" param-type="boolean" required="true" show-location="false">
+
+Whether to require a human review as part of the pipeline. The exact use is implementation-specific, but the flag should propagate unchanged so BlueJay or downstream systems can act on it.
+
+</ParamField>
+
+<ParamField body="config.accuracy" param-type="number" required="true" show-location="false">
+
+Numeric threshold (for example, 0.0–1.0) that BlueJay uses when deciding whether to classify content as NSFW. Higher values mean fewer false positives and more false negatives; lower values mean more aggressive blocking.
+
+</ParamField>
+
+## Allowlist and blocklist normalization
+
+The Settings UI and APIs may provide host lists in different shapes. Internally, the current layout normalizes them to a `string[]` of lowercased names.
+
+### Supported input shapes
+
+`getSiteNames` accepts either:
+
+- A raw array of names:
+
+  ```ts
+  const input = ["YouTube.com", "KhanAcademy.org"]
+  ```
+
+- A record of names to booleans:
+
+  ```ts
+  const input = {
+    "YouTube.com": true,
+    "facebook.com": false,
+    "KhanAcademy.org": true
+  }
+  ```
+
+Only entries with a truthy value are treated as included when the input is a record.
+
+### Helper: getSiteNames
+
+`getSiteNames` hides the shape differences and ensures values are normalized:
+
+- Handles both `string[]` and `Record<string, boolean>`.
+- Lowercases all URLs or hostnames before returning them.
+- Returns a `string[]` suitable for storing in `allowlist` or `blocklist`.
+
+Example usage:
+
+```ts
+import { getSiteNames } from "./siteListHelpers"
+
+const allowlistInput = ["YouTube.com", "KhanAcademy.org"]
+const blocklistInput = {
+  "facebook.com": true,
+  "tiktok.com": true
+}
+
+const blueJayRules: BlueJayRules = {
+  categories: [],
+  allowlist: getSiteNames(allowlistInput), // ["youtube.com", "khanacademy.org"]
+  blocklist: getSiteNames(blocklistInput), // ["facebook.com", "tiktok.com"]
+  config: {
+    nsfwLevel: "medium",
+    human: false,
+    accuracy: 0.85
+  }
+}
+```
+
+Always run both lists through `getSiteNames` before writing to `blueJayRules` so evaluation logic can assume a single shape and casing.
+
+## Updating browser policies with updateBrowserConfig
+
+The current layout centralizes browser policy mutations in `updateBrowserConfig`. This function is responsible for reconstructing a complete `blueJayRules` object on each update.
+
+### Mutation semantics
+
+`updateBrowserConfig` behaves like a controlled-state updater rather than an in-place patch:
+
+- It **rebuilds the entire `blueJayRules` object** for every call.
+- It accepts **partial input** (for example, only `categories` or only `allowlist`).
+- It merges the partial input with the current state from `useSiteCategories`.
+- It then writes back a fully populated `blueJayRules` object consistent with the selected `browserMode`.
+
+Conceptually:
+
+```ts
+function updateBrowserConfig(partial: Partial<BlueJayRules>) {
+  const current = useSiteCategories()          // current BlueJay state
+  const merged: BlueJayRules = {
+    categories: partial.categories ?? current.categories,
+    allowlist: partial.allowlist ?? current.allowlist,
+    blocklist: partial.blocklist ?? current.blocklist,
+    config: {
+      nsfwLevel: partial.config?.nsfwLevel ?? current.config.nsfwLevel,
+      human: partial.config?.human ?? current.config.human,
+      accuracy: partial.config?.accuracy ?? current.config.accuracy
+    }
+  }
+
+  // Persist merged back into the policies store along with browserMode
+}
+```
+
+Because `updateBrowserConfig` always rebuilds `blueJayRules`, avoid mutating nested arrays or config objects in-place before passing them in. Instead, construct new arrays and shallow objects and let `updateBrowserConfig` handle the final merge.
+
+### Using updateBrowserConfig from the UI
+
+From a Settings form, update browser policies by passing only the fields that changed. For example, toggling a category in Filtered Browser:
+
+```ts
+function onToggleCategory(categoryId: string, isBlocked: boolean) {
+  const current = useSiteCategories()
+
+  const nextCategories = isBlocked
+    ? [...current.categories, categoryId]
+    : current.categories.filter(id => id !== categoryId)
+
+  updateBrowserConfig({ categories: nextCategories })
+}
+```
+
+Switching from Filtered to Whitelisted Browser while preserving existing allowlist:
+
+```ts
+function enableWhitelistMode() {
+  const current = useSiteCategories()
+
+  // allCategoryIds should come from siteCategories.list.categories
+  const nextRules: Partial<BlueJayRules> = {
+    categories: allCategoryIds,
+    allowlist: current.allowlist
+  }
+
+  setBrowserMode("whitelist")
+  updateBrowserConfig(nextRules)
+}
+```
+
+In both cases, `updateBrowserConfig` produces a full `blueJayRules` object, so consumers do not need to guard against missing config fields.
+
+## Related links
+
+<Columns cols={3}>
+
+<Card
+  title="Settings overview"
+  href="/shomri-hub-current-layout-settings"
+  icon="settings"
+  cta="View all Settings"
+/>
+
+<Card
+  title="App Management settings"
+  href="/shomri-hub-current-layout-app-store"
+  icon="package"
+  cta="Manage apps"
+/>
+
+<Card
+  title="Identity and Device"
+  href="/shomri-hub-current-layout-identity-and-device"
+  icon="users"
+  cta="Review identity and device"
+/>
+
+</Columns>

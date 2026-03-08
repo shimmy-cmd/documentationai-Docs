@@ -1,0 +1,46 @@
+---
+title: Install and Updates
+description: Understand how Shomri Hub installs and updates apps using SKOverlay from the App Detail page and the Updates page.
+---
+
+## App Detail install flow
+
+The App Detail page shows information from the App Store and lets the user start an install through the native SKOverlay.
+
+The page fetches metadata from the iTunes Search API through a backend proxy, then exposes it via the `useAppStoreDetails` hook. That data powers the app name, icon, rating, and other App Store fields you see in the detail view.
+
+When the user taps **Install** on the App Detail page, the frontend calls `showSKOverlay(appStoreId)`. This function goes through a Swift bridge that presents the native SKOverlay for the given App Store app identifier. The user then completes the install in the overlay, using their normal App Store account and flows.
+
+After the user dismisses the SKOverlay, the bridge sends a callback so the React state can reset. The App Detail page clears the "install in progress" state and returns to the normal view, ready to reflect the updated app status once the backend sees the new install.
+
+<Callout kind="info">
+
+All installs and updates in Shomri Hub use the native SKOverlay flow from the App Store, triggered from the web UI through a Swift bridge.
+
+</Callout>
+
+## Updates page
+
+The Updates page helps users see which apps on the device have newer versions available in the App Store.
+
+<span id="uses-api-apps-list-updates" />Backend logic first calls `api.apps.list.updates` ([API docs](/appscheesepiiza)) to get the list of installed apps that have an update available. The UI then compares these installed apps against the latest versions from the App Store feed, using the same proxied iTunes Search API data that powers App Detail views.
+
+Each app row on the Updates page has an **Update** button. When the user clicks **Update** for a specific app, Shomri Hub again calls `showSKOverlay(appStoreId)` for that app. The Swift bridge presents the SKOverlay scoped to that app, so the user can confirm the update using the standard App Store experience.
+
+Because SKOverlay is per app, each update action opens its own overlay. After the overlay closes, the UI can refresh the updates list to remove apps that are now fully updated.
+
+## What “Open” vs “Update” means
+
+Shomri Hub mirrors the App Store distinction between apps that are already current and apps that have a newer version.
+
+When the App Store reports that the installed version matches the latest available version, the UI shows an **Open** button for that app. Selecting **Open** launches the app on the device without presenting SKOverlay, because no update is required.
+
+If the App Store reports a newer version than the one installed on the device, the UI shows an **Update** button. Selecting **Update** for that app triggers `showSKOverlay(appStoreId)`, opens the SKOverlay to manage the update, and returns control to the web UI after the overlay is dismissed.
+
+Seeing **Open** instead of **Update** is expected and indicates that the device already has the latest version for that app.
+
+## Related
+
+- [Apps section](/apps)
+- [App Store page layout](/home-page)
+- [Shomri Hub current layout architecture](/shomri-hub-current-layout-architecture)

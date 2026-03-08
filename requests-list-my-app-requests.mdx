@@ -3,6 +3,10 @@ title: requests.list.myAppRequests
 description: Query app requests for a specific device by serial and paginate them for display in the Requests page.
 ---
 
+## Used in
+
+- Not referenced in Shomri Hub docs yet.
+
 ## Overview
 
 `requests.list.myAppRequests` is a Convex query defined in `convex/requests/list.ts` that returns app requests associated with a specific device. It resolves the device by its `serial` using the `by_serial` index, then paginates related `appRequests` using the `by_device` index and strips internal Convex fields like `_id` and `_creationTime` before returning the results.

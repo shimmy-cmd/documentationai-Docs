@@ -1,0 +1,202 @@
+---
+title: Roles and permissions
+description: Understand how Shomri identity strings map to permissions, who can manage devices, who can request changes, and how this shows up in Shomri Hub.
+---
+
+## Roles
+
+Shomri uses a small set of identities to describe who controls a device and who can only request changes. Each identity falls into one of two categories: manager or request-only, with one special case for self-managed devices.
+
+### Parent and Child
+
+Parent and Child are used when you manage a young person’s device.
+
+- **Parent** is a **manager role** for one or more Child devices. Parents:
+  - Configure apps, sites, and policies for Child devices.
+  - Approve or deny requests that Children start.
+  - See and act on requests in the Requests tab.
+
+- **Child** is a **request-only role** tied to a managed device. Children:
+  - Start requests for new apps or websites.
+  - Track the status of their own requests.
+  - Do not change device configuration or policies directly.
+
+### Mentor and Mentee
+
+Mentor and Mentee mirror Parent and Child in a mentoring context.
+
+- **Mentor** is a **manager role** for one or more Mentee devices. Mentors:
+  - Configure and adjust app and web access for Mentees.
+  - Approve or deny Mentee requests.
+  - Work from the same core management views as Parents.
+
+- **Mentee** is a **request-only role**. Mentees:
+  - Start app or web access requests.
+  - Cannot modify policies or install apps without approval.
+
+### Self-Managed
+
+Self-Managed is used when a person controls their own device without going through a request workflow.
+
+- **Self-Managed** is a **manager role over their own device**:
+  - Directly install or remove apps, and adjust allowed sites.
+  - Update policies without sending requests to someone else.
+- Self-managed users **do not use the request system**:
+  - They do not create requests for their own changes.
+  - Approval queues are not relevant to them.
+
+### Organization, Admin, and Supervisor
+
+Organization, Admin, and Supervisor identities cover organizational device management.
+
+- **Organization** is a **manager role** with an administrative scope:
+  - Manage many devices and user relationships at once.
+  - Define and roll out policies at an organizational level.
+  - Approve or deny requests coming from many Child or Mentee accounts.
+
+- **Admin** is a **manager role** that typically has broad authority:
+  - Perform the same kinds of actions as an Organization identity.
+  - Manage devices, policies, and approvals across multiple users.
+  - Act as an escalation point for complex or sensitive changes.
+
+- **Supervisor** is a **manager role** for oversight within an organization:
+  - Manage devices for a subset of users or groups.
+  - Review and act on requests within their responsibility area.
+  - Adjust app, web, and policy settings where they provide supervision.
+
+## Identity strings vs roles
+
+Shomri Hub stores the source-of-truth identity for each person in `device.associatedUsers[]` as a string such as `parent`, `mentor`, `admin`, `supervisor`, `organization`, `self-managed`, `child`, or `mentee`.
+
+The UI reads these identity strings and derives the **role behavior** you see on each page: who can change settings directly, who must submit requests, and which API endpoints they can call.
+
+<Callout kind="info">
+
+Identity strings in `device.associatedUsers[]` drive permissions. When you see different controls in Shomri Hub, they reflect the underlying identity string, not an arbitrary front-end-only role.
+
+</Callout>
+
+## Permission model (managed vs request-only)
+
+The permission model centers on who can directly change configuration versus who must ask for changes.
+
+<Callout kind="info">
+
+Managed identities (parent, mentor, admin, supervisor, organization, self-managed) control configuration and approvals. Request-only identities (child, mentee) can start requests but cannot change policies themselves.
+
+</Callout>
+
+Managed roles share these core capabilities:
+
+- Configure app and web access for the devices they manage.
+- Change policies, levels, or rules without needing another approver.
+- Review, approve, or deny incoming app and web requests.
+
+Request-only roles share these constraints:
+
+- Start requests when they need new apps or sites, or changes to restrictions.
+- Wait for a manager to approve or deny the request.
+- Cannot bypass policies by installing or unblocking things directly.
+
+Self-Managed is a special managed role because the same person who uses the device is also the manager. Instead of requests, they update configuration immediately, which removes the approval loop entirely.
+
+## canChangeDirectly: derived permissions
+
+The Shomri Hub UI uses a derived flag called `canChangeDirectly` (from `useMentorStatus`) to decide whether a user’s actions should save configuration changes immediately or go through the request system.
+
+<Callout kind="info">
+
+`canChangeDirectly` controls whether a settings change triggers an admin mutation or a request. The same settings UI can behave as manager or request-only based on this flag.
+
+</Callout>
+
+### Identities with canChangeDirectly true
+
+These identities can change device settings directly:
+
+- `parent`
+- `mentor`
+- `admin`
+- `supervisor`
+- `organization`
+- `self-managed`
+
+When `canChangeDirectly` is true:
+
+- Saving settings calls the appropriate admin mutation endpoints.
+- Changes to apps, policies, and restrictions apply immediately.
+- The user typically sees manager controls, including full device and request views.
+
+### Identities with canChangeDirectly false
+
+These identities cannot change settings directly and must use the request workflow:
+
+- `child`
+- `mentee`
+
+When `canChangeDirectly` is false:
+
+- Interactions with configuration behave as **requests**, not direct updates.
+- The UI prevents direct calls to admin mutation endpoints.
+- The user waits for someone with `canChangeDirectly` true to approve or deny.
+
+If the identity string is unknown or missing, Shomri treats it as a restricted identity with `canChangeDirectly` false.
+
+<Callout kind="info">
+
+Unknown or empty identities default to restricted, mentee-like behavior. This protects admin mutation endpoints from unauthorized calls if identity resolution fails.
+
+</Callout>
+
+## UI implications
+
+The identity you have determines what you see and what actions you can take in Shomri Hub.
+
+### Manager roles in the UI
+
+If your identity is **parent**, **mentor**, **admin**, **supervisor**, or **organization**:
+
+- You see one or more managed devices in the device list.
+- The Requests tab shows:
+  - Incoming requests from your Child or Mentee accounts.
+  - Status and history for requests you approved or denied.
+- Device and policy views are editable:
+  - You can change which apps are allowed.
+  - You can adjust browsing rules and other restrictions.
+
+If your identity is **self-managed**:
+
+- You see your own device and can edit its configuration directly.
+- Policy and app controls behave like manager controls on your own device.
+
+### Request-only roles in the UI
+
+If your identity is **child** or **mentee**:
+
+- You see your own device context, but configuration is effectively read-only.
+- The Requests tab lets you:
+  - Start a new app or web request.
+  - See whether a manager approved, denied, or is still reviewing it.
+- You never see controls that actually save policy changes or install apps directly.
+
+<Callout kind="info">
+
+For child and mentee identities, the UI lets you interact with settings controls, but any attempt to save changes shows a `Request Submitted` toast and does not send admin mutations. The change becomes a request instead of a direct update.
+
+</Callout>
+
+### Self-Managed and the Requests tab
+
+Self-managed users bypass the request system, and the UI reflects that:
+
+- **No Requests tab:** self-managed users do not see a Requests tab, because they do not send or receive approvals.
+- Changes apply immediately:
+  - When they allow an app or site, the configuration updates without creating a request.
+  - There is no approval queue for others to act on.
+
+Managers (parent, mentor, admin, supervisor, organization) always see the Requests tab, and request-only users (child, mentee) see it for starting and tracking their own requests.
+
+## Related
+
+- Learn how Shomri fits together conceptually in [What is Shomri?](/what-is-shomri)
+- See how identity strings connect to devices in [Identity and device in Shomri Hub](/shomri-hub-current-layout-identity-and-device)

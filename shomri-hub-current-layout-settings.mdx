@@ -1,0 +1,478 @@
+---
+title: Settings
+description: Understand how Shomri Hub settings scope to an effective device serial and how App Management, Browser Policies, and General Restrictions map to backend data.
+---
+
+## Scope: effective serial
+
+Settings in Shomri Hub always apply to an *effective device serial*, not directly to the signed-in user.
+
+The frontend uses `useEffectiveSerial` to resolve which device a user is currently configuring. All settings queries and mutations then target that effective serial, so app, browser, and restriction policies stay consistent across the hub.
+
+<Callout kind="info">
+
+Most settings hooks accept either a `deviceId` or a `deviceConfig`. When you already have `deviceConfig` for the effective serial, pass that object instead of refetching by `deviceId`.
+
+</Callout>
+
+<Callout kind="info">
+
+Settings in App Management, Browser Policies, and General Restrictions are always scoped by the current effective device serial resolved through `useEffectiveSerial`.
+
+</Callout>
+
+## App Management
+
+App Management controls which apps are available to install on the device associated with the current effective serial.
+
+The App Management area supports three modes at the device level:
+
+- **Categories**: allow apps based on app categories assigned in the backend.
+- **Whitelist**: allow only apps explicitly whitelisted for the effective serial.
+- **Blacklist**: allow all apps except those explicitly blacklisted.
+
+When you switch App Management to **blacklist** mode, the backend sets `hasAppleAppStore=true` for the effective serial so the native Apple App Store remains available while blocking only blacklisted apps.
+
+### Device app config shape
+
+<a id="uses-api-devices-apps-get-config"></a>
+The device app configuration comes from `api.devices.apps.getConfig` ([API docs](/devices-apps-get-config)) and has this *read-time* shape:
+
+- `appFilter`: either a boolean or a record keyed by app or category id.
+- `allowedApps`: record of allowed apps for the device.
+- `blockedApps`: record of blocked apps for the device.
+- `appMode` (optional): explicit mode string used by newer code paths.
+
+More precisely:
+
+- `appFilter: boolean | Record<string, boolean | { source: string; tagFilter?: boolean | Record<string, unknown> }>`
+- `allowedApps: Record<string, unknown>`
+- `blockedApps: Record<string, unknown>`
+- `appMode?: string`
+
+Use `<ParamField>` entries when you handle this object in new code:
+
+<ParamField body="appFilter" param-type='boolean | Record<string, boolean | { source, tagFilter?: boolean | object }>' show-location="false">
+
+Controls how the device-level app filter behaves. When boolean, treat it as a global toggle. When a record, keys are category or rule ids and values are booleans or richer rule objects that include `source` and an optional `tagFilter`. The `tagFilter` itself can be a boolean or a nested object, and helpers like `getCategoryStatus` check the nested `tagFilter` when the value is an object.
+
+</ParamField>
+
+<ParamField body="allowedApps" param-type="Record<string, unknown>" show-location="false">
+
+Record keyed by Convex document ids for apps explicitly allowed for this device. Values carry metadata for internal use; treat keys as the source of truth for which apps are allowed.
+
+</ParamField>
+
+<ParamField body="blockedApps" param-type="Record<string, unknown>" show-location="false">
+
+Record keyed by Convex document ids for apps explicitly blocked for this device. As with `allowedApps`, use the keys to determine which apps are blocked.
+
+</ParamField>
+
+<ParamField body="appMode" param-type="string | null" show-location="false">
+
+Optional explicit mode hint for the device, such as `"categories"`, `"whitelist"`, or `"blacklist"`. When missing, hooks infer the mode from `appFilter`.
+
+</ParamField>
+
+All ids used as keys in `allowedApps` and `blockedApps` are Convex document ids, not bundle ids or store identifiers.
+
+<Callout kind="info">
+
+Reads and writes intentionally use different shapes. `getConfig` returns **records** keyed by app id, but `updateAppSettings` expects **arrays** of ids. Always normalize before writing to avoid dropping entries.
+
+</Callout>
+
+### Mode mapping and inference
+
+The three UI modes map to backend values as follows:
+
+#### Categories mode
+
+In **categories** mode, device configuration uses:
+
+- `appMode = "categories"` (when present).
+- `appFilter` as an object mapping ids to booleans or rule objects.
+
+Each entry in `appFilter` represents whether that category or rule is allowed or blocked for the device. The UI reads and writes this object through `useAppCategories` and related helpers.
+
+#### Whitelist mode
+
+In **whitelist** mode, device configuration uses:
+
+- `appMode = "whitelist"` (when present).
+- `appFilter` set to `false`, `null`, `undefined`, or an object where all category values are `false`.
+
+The actual allowed apps live in `allowedApps`. The app filter itself does not gate anything when you use a pure whitelist.
+
+#### Blacklist mode
+
+In **blacklist** mode, device configuration uses:
+
+- `appMode = "blacklist"` (when present).
+- `appFilter = true`.
+
+A boolean `true` here means "allow the store" and treat entries in `blockedApps` as the blacklist. In this mode, `hasAppleAppStore` is `true`, and the UI shows the Apple App Store banner plus the blocked list.
+
+#### Mode inference rules
+
+When `appMode` is missing, hooks infer the device mode from `appFilter`:
+
+- When `appFilter === true`, treat the device as **blacklist**.
+- When `appFilter` is an object with at least one `true` value, treat it as **categories**.
+- In all other cases (false, null, undefined, or object with all `false`), treat it as **whitelist**.
+
+`useDeviceAppMode` and `inferAppMode` share this logic so that older configs without `appMode` still map correctly to the three UI modes.
+
+<Callout kind="info">
+
+Keep the boolean semantics stable. Many places assume `appFilter === true` implies blacklist mode with the Apple App Store enabled.
+
+</Callout>
+
+### Category status logic
+
+Category state for the App Management UI comes from `useAppCategories`, which builds on `getCategoryStatus`. This logic interprets `appFilter` as follows:
+
+- When `appFilter === true`: treat all categories as **allowed** for the device.
+- When `appFilter` is `false`, `null`, or `undefined`: treat all categories as **blocked**.
+- When `appFilter` is a boolean: use that boolean directly as the category state.
+- When `appFilter` is an object:
+  - Look up the category id in the object.
+  - When the key exists and the value is a boolean, use that boolean as the category state.
+  - When the key exists and the value is an object, check its `tagFilter` field to decide allowed or blocked. When `tagFilter` is a boolean, use it directly; when it is an object, interpret that nested object according to the rule type and derive allowed/blocked from it.
+  - When the key is missing, default that category to **allowed**.
+
+This means omitting a category from the `appFilter` object does not block it; categories without explicit entries remain allowed.
+
+### Mutations and full-state updates
+
+Device-level app settings mutate through `useDeviceMutations.updateAppSettings`. This mutation has a strict *write-time* contract:
+
+- Always send the full app state:
+
+  - `allowedApps: string[]`
+  - `blockedApps: string[]`
+  - `appFilter: Record<string, boolean>`
+
+- Treat it as a *replace* operation, not a patch. When you omit a field or drop entries, the backend loses that data.
+
+<Callout kind="info">
+
+`updateAppSettings` expects the complete `{allowedApps, blockedApps, appFilter}` state with **arrays** of Convex ids and a **record of booleans** for `appFilter`. Avoid partial updates; they overwrite missing values and can silently clear existing allowlists or blocklists.
+
+</Callout>
+
+When you build UI flows that add or remove allowed or blocked apps:
+
+1. Read the current `allowedApps` and `blockedApps` records from `getConfig`.
+2. Extract the keys into arrays.
+3. Merge your changes into those arrays.
+4. Build a boolean `appFilter` record for the categories you manage.
+5. Call `updateAppSettings` with the merged arrays and `appFilter`.
+
+### Blacklist view and Apple App Store banner
+
+The component `useBlockedApps` reads from `useAppCategories` and the underlying `appFilter` to produce the list of blocked apps and categories for the current mode.
+
+In **blacklist** mode:
+
+- `hasAppleAppStore === true` because `appFilter === true`.
+- The UI shows:
+  - An Apple App Store banner for the device.
+  - A blocked list driven by `blockedApps` and the blacklist category state.
+
+In **categories** or **whitelist** mode, the blocked apps view derives from category filters and the absence of entries in `allowedApps` or `blockedApps`, but the Apple App Store banner does not appear.
+
+## Browser Policies
+
+Browser Policies define which websites the device browser can access for the current effective serial. The same three conceptual modes exist at the browser layer, but the current layout labels them as:
+
+- **Filtered Browser**: filter web access by categories, plus explicit allow and block lists.
+- **Whitelisted Browser**: block all categories and allow access only to explicitly whitelisted sites.
+- **No Browser**: disable the managed browser completely at the Shomri layer.
+
+The UI reads and writes browser policies for the effective serial so that changing devices (for example, by changing `useEffectiveSerial` context) immediately switches the active browser rules.
+
+### Browser config and BlueJay rules
+
+<a id="uses-api-devices-policies-get"></a>
+Device-level browser rules come from `api.devices.policies.get` ([API docs](/devices-policies-get)). That query returns:
+
+- `browserMode`: the high-level mode `"categories"`, `"whitelist"`, or `"none"`.
+- `blueJayRules`: the underlying object passed to the BlueJay content filtering service.
+
+`blueJayRules` has this structure when present:
+
+```ts
+{
+  categories: string[]
+  allowlist: string[]
+  blocklist: string[]
+  config: {
+    nsfwLevel: "light" | "medium" | "strict"
+    human: boolean
+    accuracy: number
+  }
+}
+```
+
+Use `<ParamField>` entries when you handle these fields:
+
+<ParamField body="categories" param-type="string[]" show-location="false">
+
+List of category identifiers interpreted as **blocked categories** by BlueJay.
+
+</ParamField>
+
+<ParamField body="allowlist" param-type="string[]" show-location="false">
+
+List of domain or URL strings that the device browser should always allow, even when they fall into blocked categories.
+
+</ParamField>
+
+<ParamField body="blocklist" param-type="string[]" show-location="false">
+
+List of domain or URL strings that the device browser should always block, even when categories or filters would normally allow them.
+
+</ParamField>
+
+<ParamField body="config.nsfwLevel" param-type='"light" | "medium" | "strict"' show-location="false">
+
+Content sensitivity level for NSFW detection:
+- `"light"`: blocks explicit adult content and pornography.
+- `"medium"`: includes `"light"` plus provocative imagery and mature themes.
+- `"strict"`: includes `"medium"` plus bikinis, swimwear, revealing clothing, and any suggestive content.
+
+</ParamField>
+
+<ParamField body="config.human" param-type="boolean" show-location="false">
+
+When `true`, apply stronger blurring or blocking to images that contain people, even when they are not strictly NSFW.
+
+</ParamField>
+
+<ParamField body="config.accuracy" param-type="number" show-location="false">
+
+Numeric threshold for model confidence used when deciding to block content. Higher values require more confident detections before blocking.
+
+</ParamField>
+
+<Callout kind="info">
+
+`blueJayRules.categories` represents **blocked** categories, not allowed ones. Adding a category id to this list blocks that category for the device.
+
+</Callout>
+
+### Browser modes and mapping
+
+The Browser Policies UI maps its three modes to `browserMode` and `blueJayRules` as follows.
+
+#### Filtered Browser
+
+In **Filtered Browser** mode:
+
+- `browserMode = "categories"`.
+- `blueJayRules` is a populated object with:
+  - `categories` listing blocked categories.
+  - `allowlist` and `blocklist` for explicit overrides.
+  - `config` for NSFW and human detection settings.
+
+Category selection happens through hooks like `useSiteCategories`, which interpret `blueJayRules.categories` as the currently blocked set.
+
+#### Whitelisted Browser
+
+In **Whitelisted Browser** mode:
+
+- `browserMode = "whitelist"`.
+- `blueJayRules` is still an object, but the categories layer is configured so that all categories are effectively blocked at the BlueJay layer.
+- `allowlist` contains the list of sites that remain accessible despite all categories being blocked.
+- `blocklist` continues to act as an explicit deny list on top of the whitelist.
+
+The UI treats the allowlist as the source of truth for where the mentee can browse, with categories used to enforce a default-deny stance.
+
+#### No Browser
+
+In **No Browser** mode:
+
+- `browserMode = "none"`.
+- `blueJayRules` is disabled: treat it as `false`, `undefined`, or `null`.
+- The managed browser is effectively off; Shomri does not send category or list-based filtering rules for that device.
+
+### Content filtering levels and human blur
+
+Content sensitivity is controlled via `config.nsfwLevel` and `config.human`:
+
+- `"light"`: blocks explicit adult content and pornography.
+- `"medium"`: includes `"light"` plus provocative imagery and mature themes.
+- `"strict"`: includes `"medium"` plus bikinis, swimwear, revealing clothing, and any suggestive content.
+
+The `config.human` flag controls human detection blur, applying stricter blocking or blurring to images that contain people.
+
+### Site lists representation and helpers
+
+Internally, browser settings hooks and utilities work with site lists in two interchangeable shapes:
+
+- `string[]`: list of domain or URL strings.
+- `Record<string, boolean>`: map of domain or URL strings to booleans, typically used when merging or toggling individual entries.
+
+Helpers like `getSiteNames` understand both shapes and normalize them into a consistent list of site names for display.
+
+The browser settings hooks lowercase URLs before storage so that `"YouTube.com"` and `"youtube.com"` do not produce divergent entries.
+
+<Callout kind="info">
+
+Always lowercase hostnames before you add them to `allowlist` or `blocklist`. Mixed casing leads to duplicate entries and confusing behavior when BlueJay normalizes differently.
+
+</Callout>
+
+### Updating browser config
+
+Device-level browser policies mutate through `useDeviceMutations.updateBrowserConfig`. This mutation:
+
+- Rebuilds the complete `blueJayRules` object on each update.
+- Accepts *partial* inputs from the UI.
+- Merges partial inputs with the current rules returned by `useSiteCategories` so that missing fields do not get dropped.
+
+When you call `updateBrowserConfig`, pass only the fields you are changing (for example, an updated `categories` array or a modified `allowlist`). The hook:
+
+1. Reads the current `blueJayRules` for the effective serial.
+2. Normalizes list shapes (arrays vs records) and lowercases URLs.
+3. Merges your partial update into the existing structure.
+4. Writes the combined `browserMode` and `blueJayRules` back through the devices policies update path.
+
+<Callout kind="info">
+
+`updateBrowserConfig` performs a read–modify–write around `blueJayRules`. Do not pre-merge state manually in callers; rely on the hook to merge partial updates with the existing rules from `useSiteCategories`.
+
+</Callout>
+
+## General Restrictions
+
+General Restrictions configure high-level iOS restrictions for the device associated with the current effective serial.
+
+The frontend reads these values from a backend restrictions query using the current `deviceConfig` for the effective serial. That query returns a record:
+
+- Keys are iOS MDM restriction identifiers.
+- Values are `"device"`, `"level"`, or `false`.
+
+The value encodes the source of the restriction:
+
+- `"device"`: restriction comes from the device configuration itself.
+- `"level"`: restriction comes from a level that currently covers this device.
+- `false`: restriction is not active.
+
+Known restriction keys include:
+
+- `allowAssistant`
+- `allowCamera`
+- `allowScreenShot`
+- `allowExplicitContent`
+- `allowBookstoreErotica`
+- `forceAppStoreRating`
+- `allowInAppPurchases`
+- `allowVideoConferencing`
+- `allowYouTube`
+- `allowSafari`
+- `allowAirDrop`
+- `allowPasscodeModification`
+
+For keys the UI does not recognize, the General Restrictions layout still shows a toggle row, but derives the label by formatting the key into a title-style string.
+
+<Callout kind="info">
+
+The General Restrictions section currently shows a `"Coming Soon"` banner. Backing queries already return `Record<restrictionKey, "device" | "level" | false>`, but parts of the UI are stubbed and do not yet expose all available restriction keys or write paths.
+
+</Callout>
+
+When you change a toggle in the UI, Shomri updates the underlying iOS restriction key for the current effective serial and keeps the visual switches in sync with the restriction record returned by the backend.
+
+## Levels
+
+Levels are group-level configurations that can override device settings. Each level can define its own:
+
+- `appFilter` and `appMode` for app availability.
+- `blueJayRules` and `browserMode` for browser policies.
+
+When a device belongs to one or more levels, the hub merges level-level configurations with the device-level configuration. A restriction or rule can come from either the device or a level:
+
+- Device-specific overrides use `"device"` in restriction maps.
+- Level-derived rules use `"level"` and may supersede device-local values.
+
+### Level hooks and mutations
+
+The level hooks mirror device hooks:
+
+- `useLevelAppMode` and related helpers use the same mode inference rules as `useDeviceAppMode` and `inferAppMode`.
+- `useLevelBrowserMode` aligns with `browserMode` at the level scope and uses BlueJay rules in the same way as device policies.
+
+Mutations also mirror the device layer:
+
+- Level app updates receive the level-level app config (`appFilter`, `allowedApps`, `blockedApps`, and optionally `appMode`).
+- Level browser updates receive the level-level browser config (`browserMode` and `blueJayRules`).
+
+When you add new fields to device-level settings, consider whether they must also exist at the level scope, and update both the device and level APIs and hooks together.
+
+## Edge cases and stubs
+
+Several edge cases and stubs affect how Settings behaves in the current layout.
+
+### Mentee without Clerk mapping
+
+When a mentee does not have a Clerk user mapping:
+
+- The serial still resolves through `useEffectiveSerial`.
+- `deviceConfig` resolves to `null` for that serial.
+- The paginated apps query still runs and returns app data where possible.
+
+Components that assume `deviceConfig` exists must guard for `null` and fall back gracefully when a device is not fully managed.
+
+### Stubbed hooks in the current layout
+
+Some hooks are admin-only or stubbed in the current Shomri Hub layout:
+
+- `useDeviceDetails` returns `null` in the mentee experience and is only meaningful in admin views.
+- `useAppRestrictions` is mostly stubbed and not the source of truth for app policies; rely on `useAppCategories`, `useBlockedApps`, and `updateAppSettings` instead.
+- `useBrowserPolicies` is also stubbed; the real browser policy logic lives in `useSiteCategories`, `api.devices.policies.get`, and `updateBrowserConfig`.
+
+<Callout kind="info">
+
+When you change browser behavior, update `useSiteCategories` and `updateBrowserConfig` first. Hooks like `useBrowserPolicies` are legacy and do not drive the active mentee experience.
+
+</Callout>
+
+### Mentee device-only mode
+
+The mentee UI supports a device-only mode that bypasses Clerk:
+
+- When `localStorage.mentee_device_mode === "true"` and `device_serial` is present, the hub uses the serial directly without requiring Clerk authentication.
+- In this mode, the same settings logic applies: `useEffectiveSerial` resolves from the stored serial, and all device apps, browser, and restrictions settings continue to scope to that effective serial.
+
+This path is mainly for demos, testing, or environments where Clerk is unavailable, but the underlying device- and level-level settings behavior remains the same.
+
+## Related
+
+Use these pages for a broader view of how settings fit into the hub:
+
+<Columns cols={3}>
+
+<Card title="Settings entry point" href="/settings" icon="settings" cta="Open settings">
+
+See how users navigate into the Settings area and how identity selection drives the effective context before you apply policies.
+
+</Card>
+
+<Card title="App Store layout" href="/shomri-hub-current-layout-app-store" icon="package" cta="View app store">
+
+Understand how app availability and App Management settings change which apps appear in the App Store grid.
+
+</Card>
+
+<Card title="Identity and device context" href="/shomri-hub-current-layout-identity-and-device" icon="users" cta="Review identity mapping">
+
+Learn how identity, roles, and device serial resolution work together to produce the effective serial for settings.
+
+</Card>
+
+</Columns>

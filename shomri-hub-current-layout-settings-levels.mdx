@@ -1,0 +1,121 @@
+---
+title: Levels in the Shomri Hub current layout
+description: Understand how Levels override device app and browser settings in the Shomri Hub current layout, including hooks, mutations, and restriction precedence.
+---
+
+## What a level is
+
+Levels define group-level settings that override per-device configuration in the Shomri Hub current layout.
+
+Each level belongs to a group and carries its own app and browser configuration. When a device is associated with a level, the UI needs to treat level settings as the effective source of truth where they exist, while still surfacing underlying device settings and restrictions for context.
+
+## Settings a level can carry
+
+Levels carry the same logical settings you already handle at the device level, but scoped to a group:
+
+- **Apps**
+  - `appFilter` — which apps are allowed or visible for devices in this level.
+  - `appMode` — how the device should treat apps (for example, managed vs allowed lists; match your existing device app mode semantics).
+
+- **Browser**
+  - `blueJayRules` — which web rules apply to devices in this level.
+  - `browserMode` — how the browser should behave (for example, filtered vs unrestricted; again, mirror the device-level meaning).
+
+When you render effective settings for a device that belongs to a level, read from the level first for these four fields, and fall back to the device-level values only when the level does not define them.
+
+<Callout kind="info">
+
+Restrictions that apply to a device can come from the device itself or from its level. The shared restrictions record includes an attribution field that uses the literal values `device` and `level` so the UI can explain where a given restriction originates.
+
+</Callout>
+
+## Hooks: useLevelAppMode and useLevelBrowserMode
+
+Level hooks mirror the existing device hooks so the UI code stays symmetrical.
+
+### App mode hook
+
+Use `useLevelAppMode` to read and react to the app settings defined on a level.
+
+Typical responsibilities:
+
+- Load the current `appMode` and `appFilter` for a specific level.
+- Expose derived values your UI already expects from the device-level hook (for example, flags for read-only state or whether the filter is restrictive).
+- Provide a stable interface so components that previously worked against device hooks can be reused for levels with minimal changes.
+
+### Browser mode hook
+
+Use `useLevelBrowserMode` to work with browser-related settings on a level.
+
+Expected behavior is analogous to the device-level browser hook:
+
+- Read the level `browserMode` and `blueJayRules`.
+- Surface any derived browser policy information your components rely on.
+- Allow components to treat level-based browser policies the same way they treat device-based ones, differing only by the source identifier.
+
+By keeping the signatures and return shapes aligned with the device hooks, you avoid duplicating UI logic and keep device vs level decisions near the boundary where you choose which hook to call.
+
+## Mutations for level settings
+
+All writes to level settings go through the `levels` API namespace. Do not reuse device mutations for group-level changes.
+
+### Updating app settings for a level
+
+Use the `api.levels.apps.update` mutation for any change that affects a level’s app configuration, including both `appMode` and `appFilter`.
+
+Use the device mutation `api.devices.apps.update` only when you are explicitly editing settings for a single device rather than for a whole level.
+
+### Updating browser and rules settings for a level
+
+Use the `api.levels.policies.update` mutation to change browser behavior and attached BlueJay rules for a level.
+
+Use the device mutation `api.devices.policies.update` for device-only exceptions that should not affect other members of the level.
+
+## Precedence and attribution in the UI
+
+When you build the Settings UI for a device that participates in levels, treat level configuration as a layer that can override device configuration for the supported fields.
+
+At a high level:
+
+- **App settings precedence**
+  - If a level defines `appMode` or `appFilter`, treat those as the effective values.
+  - If a level leaves one of these unset, fall back to the device’s own `appMode` or `appFilter`.
+- **Browser settings precedence**
+  - If a level defines `browserMode` or `blueJayRules`, use them as the effective browser policy.
+  - If a field is absent at the level, read it from the device.
+
+In the UI, be explicit about where a value comes from:
+
+- When a control is driven by a level setting, label or annotate it as such and, if needed, gray out the device-level control that would otherwise edit the same field.
+- When a device overrides or extends a level setting (for example, device-only extra allowed apps), show both values with clear attribution so it is obvious which part is shared at the level and which part is device-specific.
+
+For restrictions, use the shared record’s `device` vs `level` attribution to explain why a user sees or does not see a given app or site. This matters for debugging: an app may be blocked even when the device’s own filter allows it, because the level configuration or level-based BlueJay rules are stricter.
+
+See also [General Restrictions](/shomri-hub-current-layout-settings-general-restrictions) for how combined device and level rules translate into effective restrictions.
+
+## Related links
+
+<Columns cols={3}>
+
+<Card
+  title="Settings overview"
+  href="/shomri-hub-current-layout-settings"
+  icon="settings"
+  cta="View settings"
+/>
+
+<Card
+  title="App management"
+  href="/shomri-hub-current-layout-settings-app-management"
+  icon="monitor"
+  cta="Manage apps"
+/>
+
+<Card
+  title="Browser policies"
+  href="/shomri-hub-current-layout-settings-browser-policies"
+  icon="monitor"
+  cta="Configure browser rules"
+/>
+
+</Columns>

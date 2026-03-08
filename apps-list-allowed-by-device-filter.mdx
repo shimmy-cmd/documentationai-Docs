@@ -1,16 +1,19 @@
 ---
 title: apps.list.allowedByDeviceFilter
-description: Returns a paginated list of apps that are allowed for a given device serial, with optional search-based filtering applied.
+description: >-
+  Returns a paginated list of apps that are allowed for a given device serial,
+  with optional search-based filtering applied.
 ---
+## Used in
+
+- [Shomri Hub Current Layout App Store — App Store Home data sources](/shomri-hub-current-layout-app-store#uses-api-apps-list-allowed-by-device-filter)
 
 ## Overview
 
 `apps.list.allowedByDeviceFilter` returns a paginated list of apps that a specific device is allowed to install or display. The function runs on the Convex backend under `convex/apps/list.ts`.
 
-<Callout kind="info">
-
-**Type: Query** — use this function with Convex query clients such as `usePaginatedQuery` or `query`.
-
+<Callout kind="info" collapsed="false">
+  **Type: Query** — use this function with Convex query clients such as `usePaginatedQuery` or `query`.
 </Callout>
 
 ## Purpose

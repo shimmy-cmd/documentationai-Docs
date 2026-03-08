@@ -1,0 +1,57 @@
+---
+title: App Store (Home)
+description: Understand how the Shomri Hub App Store home page chooses its mode, loads app data, and merges and filters results for display.
+---
+
+## Modes
+
+The App Store home page shows different content depending on whether the current device exposes the Apple App Store or uses the Shomri-managed catalog.
+
+<Callout kind="info">
+
+The App Store has two modes:
+
+- **Apple App Store mode** activates when `hasAppleAppStore=true` for the device and shows apps restricted to the native App Store experience.
+- **Shomri App Store mode** is the default when `hasAppleAppStore` is false or unavailable and shows allowed apps based on Shomri whitelists and categories.
+
+</Callout>
+
+In both modes, the App Store page remains the primary home surface where the user discovers and installs apps that are allowed for their device.
+
+## Data sources
+
+The App Store home page aggregates multiple backend sources before showing any app tiles.
+
+- <a id="uses-api-apps-list-allowed-by-device-filter"></a> **`api.apps.list.allowedByDeviceFilter`**  
+  A paginated query that runs whenever a device serial is available. It returns apps allowed for the specific device, scoped by serial and any active filters. Use this as the main source for large catalogs or when scrolling through many results. [API docs](/apps-list-allowed-by-device-filter)
+
+- <a id="uses-api-apps-list-allowed-by-device-static"></a> **`api.apps.list.allowedByDeviceStatic`**  
+  A non-paginated whitelist that returns a static set of allowed apps. This is useful for bootstrapping the page quickly or when you only need a small, curated set of apps. [API docs](/apps-list-allowed-by-device-static)
+
+- <a id="uses-api-apps-list-updates"></a> **`api.apps.list.updates`**  
+  An action used by the Updates view to query which apps have newer versions available. The App Store home page uses this when showing update badges or the Updates section. [API docs](/appscheesepiiza)
+
+These sources are combined on the client so the user sees a single, coherent list of apps and updates across both dynamic and static rules.
+
+## Merging and filtering
+
+The App Store home page merges results from the different data sources into one list before rendering.
+
+- **Merge**: Combine items from `allowedByDeviceFilter`, `allowedByDeviceStatic`, and any update metadata from `apps.list.updates` into a single collection.
+- **Deduplicate**: Identify the same app appearing in multiple sources and keep a single entry with the most complete metadata and update information.
+- **Sort**: Order apps by the App Store sort rules, such as featured placement, categories, or relevance to the current device, so the most important apps appear first.
+
+After merging, the App Store applies additional filtering:
+
+- **Hidden apps filter**: Exclude system or restricted apps that should not be visible to the user, including WebKit and Safari.
+- **Mode-aware filtering**: In Apple App Store mode, keep results aligned with Apple App Store restrictions; in Shomri App Store mode, restrict results to the Shomri-allowed catalog.
+
+These steps ensure that, regardless of the underlying data source mix, the user only sees apps they are allowed to install and that are relevant for their device.
+
+## Related
+
+Explore how the App Store home page fits into the rest of the Shomri Hub experience.
+
+- [App Store home page behavior](/home-page)
+- [What is Shomri?](/what-is-shomri)
+- [Install and Updates in the current layout](/shomri-hub-current-layout-install-and-updates)

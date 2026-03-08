@@ -3,6 +3,10 @@ title: users.get.byClerkId
 description: Resolve a Clerk user ID to the corresponding Convex user document ID using the users.get.byClerkId query.
 ---
 
+## Used in
+
+- Identity and device resolution → Identity resolution chain step for `api.users.get.byClerkId` in [Shomri Hub Current Layout: Identity and Device](/shomri-hub-current-layout-identity-and-device#uses-api-users-get-by-clerk-id)
+
 ## Overview
 
 `users.get.byClerkId` is a Convex query defined in `convex/users/get.ts` that looks up a user by the `by_clerk_id` index on the `users` table. It returns the matching user's Convex `_id`, or `null` when no user exists for the given Clerk user ID.

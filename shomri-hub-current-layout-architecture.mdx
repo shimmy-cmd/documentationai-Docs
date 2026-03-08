@@ -1,0 +1,62 @@
+---
+title: Architecture (high level)
+description: Understand how the Shomri Hub web app runs inside a native iOS shell with a Swift bridge, SKOverlay, and Clerk-based authentication.
+---
+
+## Overview
+
+Shomri Hub is a managed app store for iOS devices under MDM supervision, delivered as a web app that runs inside a native iOS container.
+
+<Callout kind="info">
+
+Shomri Hub renders a web application inside a native iOS `WKWebView`, with a Swift bridge that delegates App Store installs and updates to `SKStoreProductViewController` (`SKOverlay`) while keeping authentication and routing in the web layer.
+
+</Callout>
+
+From a high-level architecture perspective, you can think of three main pieces working together:
+
+- A **web frontend** that owns routing, UI, and auth flows.
+- A **native iOS shell** that embeds the web app and exposes App Store capabilities.
+- A **bridge layer** that connects JavaScript calls in the web app to Swift code that shows and dismisses App Store overlays.
+
+The following sections outline how these pieces interact in the current layout.
+
+## Web app inside iOS
+
+The Shomri Hub frontend runs inside a `WKWebView` embedded in a native iOS host app, rather than as a standalone mobile browser session.
+
+The native app loads the Shomri Hub web UI as its primary content view. From the web app's point of view, it behaves like any modern single-page application, but with additional globals available for bridging to native code.
+
+Because the runtime is a `WKWebView`, the web layer can call into Swift using the `window.webkit.messageHandlers` API instead of relying on custom URL schemes or deep links.
+
+Outside of the `WKWebView` context (for example, when opened in a regular browser), the same JavaScript bridge functions fall back to logging so the app can run without native capabilities, even though install and update flows will not use `SKOverlay`.
+
+## Native bridge and SKOverlay
+
+The native bridge connects JavaScript calls from the web app to Swift code that presents the App Store overlay for installs and updates.
+
+The main JavaScript bridge calls in the current layout are:
+
+- `window.webkit.messageHandlers.showSKOverlay(appStoreId)`
+- `closeSKOverlay()`
+- `window.onSKOverlayDismissed` (callback)
+
+When the web app wants to trigger an App Store install or update, it calls `window.webkit.messageHandlers.showSKOverlay(appStoreId)`. The Swift side receives this message and presents `SKStoreProductViewController` as an `SKOverlay` on top of the `WKWebView`.
+
+After the user finishes interacting with the overlay, the native layer dismisses `SKOverlay` and invokes the `window.onSKOverlayDismissed` callback in JavaScript so the web app can update UI state or refresh app status.
+
+In non-WebView environments where `window.webkit` is not available, these bridge calls fall back to `console.log` so developers can still exercise flows without crashing on missing native APIs.
+
+## Authentication at a glance
+
+Authentication for Shomri Hub uses Clerk on the web layer, with a dedicated `/auth` route that lives inside the same frontend running in the `WKWebView`.
+
+Users sign in via the `/auth` route, which also handles password reset flows using Clerk's `reset_password_email_code` strategy. After a successful sign-in or password reset, Clerk redirects the user back to the route they originally requested so they land where they intended to go.
+
+An `AuthGuard` component wraps all application routes except `/auth` and the documentation pages. When a user hits a protected route without a valid session, `AuthGuard` routes them to `/auth` and includes enough context for Clerk to redirect them back after authentication.
+
+This setup keeps auth responsibilities in the web app while the native shell focuses on embedding the `WKWebView` and exposing App Store capabilities through the bridge.
+
+## Related
+
+Learn more about the product and user-facing behavior in [What is Shomri?](/what-is-shomri).

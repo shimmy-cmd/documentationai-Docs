@@ -3,6 +3,10 @@ title: levels.list.all
 description: Convex query that paginates and returns all levels for support users, used by the frontend user level flow.
 ---
 
+## Used in
+
+- Not referenced in Shomri Hub docs yet.
+
 ## Overview
 
 `levels.list.all` is a Convex **query** that paginates and returns all levels defined in your backend, omitting the `_creationTime` field from the results. The function is implemented in `convex/levels/list.ts` and enforces that the caller has support role permissions before returning any data.

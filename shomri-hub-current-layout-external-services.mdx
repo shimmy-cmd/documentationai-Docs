@@ -1,0 +1,31 @@
+---
+title: External services
+description: Learn which external services Shomri Hub depends on, how they are used, and what this means for reliability and data handling.
+---
+
+## Services
+
+Shomri Hub relies on the following external services as part of its core functionality:
+
+- **Clerk** – authentication and user management.
+- **Convex** – backend data storage and server-side logic.
+- **Gleap** – in-product feedback and bug reporting.
+- **iTunes Search API (proxied)** – app metadata and search results for the App Store experience.
+- **PostHog** – product analytics and usage insights.
+- **HyperDX** – logging, traces, and observability.
+
+<Callout kind="info">
+
+These services are implementation dependencies of Shomri Hub. You do not configure or manage these integrations directly from your Shomri Hub workspace.
+
+</Callout>
+
+## Why they matter
+
+These external services handle critical parts of the Shomri Hub experience, such as secure sign-in, persistent data, app catalog information, analytics, and operational monitoring.
+
+Understanding that Shomri Hub depends on these providers helps you evaluate reliability, data flows, and compliance requirements in your own environment and procurement process.
+
+## Related
+
+- [What is Shomri?](/what-is-shomri)

@@ -1,0 +1,43 @@
+---
+title: Requests
+description: Understand who uses the Requests page in Shomri Hub, how App Request and Web Request tabs work, and how request statuses are derived.
+---
+
+## Who uses Requests
+
+Use the Requests page to review and act on app and web access requests that users submit through Shomri.
+
+Requests typically appear for admins or approvers who are responsible for allowing or denying access to apps and websites according to your organization policies.
+
+<Callout kind="info">
+
+Self-managed environments do not show a Requests tab. If your Shomri Hub is self-managed, users handle their own app and web access without central review.
+
+</Callout>
+
+## Tabs
+
+The Requests page is split into two tabs that group requests by type:
+
+- **App Request** — Shows requests to install or use apps that are not currently available or allowed for the requester.
+- **Web Request** — Shows requests to access websites or domains that are currently blocked or restricted.
+
+Both tabs follow the same status rules so you can scan and act on them consistently, regardless of whether the request is for an app or for a website.
+
+## Statuses
+
+Each request has a status derived from how and whether it was answered.
+
+- **Pending** — Shomri marks a request as Pending when it has no `responseTime`. This means no one has approved or rejected the request yet.
+- **Approved** — A request is Approved when the response is an allow decision at any relevant scope: level, device, or a direct allow. If the responder chooses allow at level, device, or allow, the status shows as Approved.
+- **Rejected** — A request is Rejected when the response is a deny decision. If the responder chooses deny, the status shows as Rejected.
+
+Use these statuses to sort and filter which requests still need action (Pending), which have been granted (Approved), and which have been turned down (Rejected).
+
+## Related
+
+Connect the Requests page behavior with the rest of Shomri Hub:
+
+- Learn how Requests fit into the overall product in [What is Shomri?](/what-is-shomri)
+- See who can see and act on requests in [Shomri Hub current layout: Roles](/shomri-hub-current-layout-roles)
+- Configure defaults for approvals and policies in [Shomri Hub current layout: Settings](/shomri-hub-current-layout-settings)

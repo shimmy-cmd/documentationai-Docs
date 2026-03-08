@@ -3,6 +3,10 @@ title: devices.restrictions.get
 description: Returns the effective restriction flags for a device by merging level policies with device-specific overrides.
 ---
 
+## Used in
+
+- [General restrictions settings → overview mention](/shomri-hub-current-layout-settings-general-restrictions#uses-api-devices-restrictions-get)
+
 ## Overview
 
 `devices.restrictions.get` is a Convex query that returns the effective restriction map for a given device configuration. It reads the device config, verifies that the caller has read access to the device, loads the associated level, and then merges restrictions from both sources into a single map.

@@ -1,0 +1,128 @@
+---
+title: What is Shomri?
+description: Learn how Shomri provides a managed app store for MDM-supervised iOS devices, how identity and device resolution work, and how the main pages fit together.
+---
+
+## What it does
+
+<Callout kind="info">
+
+Shomri is a managed app store for iOS devices under MDM supervision. Instead of using the native Apple App Store directly, users browse, install, and request apps through a controlled web interface that enforces device- and role-specific policies.
+
+</Callout>
+
+Shomri replaces the open-ended App Store experience with a policy-aware catalog tailored to each supervised device. Parents, mentors, organizations, and self-managed users see different apps and controls based on their role and the device configuration.
+
+The Shomri web app runs inside a native iOS container, which lets it trigger system-level install and update flows while still rendering most of the UI in a browser environment.
+
+## Shomri Hub current layout
+
+Use these pages to explore how the current Shomri Hub is structured, from architecture and roles to individual screens and services.
+
+<Columns cols={3}>
+
+  <Card title="Architecture" href="/shomri-hub-current-layout-architecture" icon="monitor">
+
+  Understand how the Shomri web app, native container, and backend services fit together, including WebView hosting and install overlays.
+
+  </Card>
+
+  <Card title="Roles and permissions" href="/shomri-hub-current-layout-roles" icon="users">
+
+  See how parents, mentees, self-managed users, and organizations map to permissions and what each role can do in the hub.
+
+  </Card>
+
+  <Card title="Identity and device resolution" href="/shomri-hub-current-layout-identity-and-device" icon="shield">
+
+  Learn how Shomri resolves the current user and supervised device using identity records, serials, and gating components.
+
+  </Card>
+
+</Columns>
+
+<Columns cols={3}>
+
+  <Card title="App Store page" href="/shomri-hub-current-layout-app-store" icon="home">
+
+  Review how the App Store view is built, including allowed apps, Apple App Store mode, and how device policies shape the catalog.
+
+  </Card>
+
+  <Card title="Install and updates flow" href="/shomri-hub-current-layout-install-and-updates" icon="download">
+
+  Walk through the app install and update lifecycle, from tapping Install in Shomri to SKOverlay and status handling.
+
+  </Card>
+
+  <Card title="Requests workflow" href="/shomri-hub-current-layout-requests" icon="help-circle">
+
+  Dive into the app and web request flows, statuses, and how managers approve or reject changes to device access.
+
+  </Card>
+
+</Columns>
+
+<Columns cols={3}>
+
+  <Card title="Settings and policies" href="/shomri-hub-current-layout-settings" icon="settings">
+
+  See how app management, browser policies, and general restrictions are configured and applied per device or level.
+
+  </Card>
+
+  <Card title="External services" href="/shomri-hub-current-layout-external-services" icon="cloud">
+
+  Explore how Clerk, Convex, analytics, and logging services integrate into the current Shomri Hub layout.
+
+  </Card>
+
+</Columns>
+
+## Core user flows
+
+The main Shomri screens reuse the same identity and serial context but surface different capabilities: browsing apps, managing updates, handling requests, and configuring policies.
+
+<Columns cols={3}>
+
+  <Card title="App Store (Home)" href="/home-page" icon="home">
+
+  The App Store page is the primary landing screen. It shows the catalog of apps available to the current device, filtered by policies and role.
+
+  </Card>
+
+  <Card title="Apps Section" href="/apps" icon="package">
+
+  The Apps section covers app details, including metadata from the iTunes API and the install and update actions that trigger the native SKOverlay.
+
+  </Card>
+
+  <Card title="Browser Page" href="/browser-page" icon="monitor">
+
+  The Browser page reflects the current browser policies, including site categories, whitelists, or disabled browser access depending on Settings.
+
+  </Card>
+
+</Columns>
+
+<Columns cols={3}>
+
+  <Card title="Settings" href="/settings" icon="settings">
+
+  The Settings page exposes App Management, Browser Policies, and General Restrictions for the current device or level, depending on role.
+
+  </Card>
+
+  <Card title="Contact Page" href="/contact-page" icon="users">
+
+  The Contact page gives users and managers a direct path to get help, report issues, or request configuration changes outside the app.
+
+  </Card>
+
+  <Card title="Sign In" href="/sign-in" icon="lock">
+
+  The Sign In page is the Clerk-powered entry point that establishes the Clerk ID used in the identity resolution chain.
+
+  </Card>
+
+</Columns>

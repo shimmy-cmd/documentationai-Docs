@@ -1,0 +1,258 @@
+---
+title: App management settings
+description: Understand how Shomri Hub app management settings are mapped, inferred, read from devices.apps.getConfig, and mutated via updateAppSettings.
+---
+
+## App management overview
+
+App management settings control which apps a device can see and install through three modes and related backend fields. This guide explains how those modes map to stored config, how the UI infers and displays them, and how to read and update them safely.
+
+<Callout kind="info">
+
+App management reads config as records (`allowedApps`, `blockedApps`, `appFilter` mapping objects) but writes config as flattened arrays plus a simplified `appFilter`. Treat read and write shapes as intentionally asymmetric.
+
+</Callout>
+
+## Modes and backend mapping
+
+The App Management section exposes three mutually exclusive modes:
+
+- **Categories** — decide allowed/blocked apps by category filter.
+- **Whitelist** — explicit list of allowed apps, everything else blocked.
+- **Blacklist** — explicit list of blocked apps, everything else allowed, including the Apple App Store.
+
+Internally these map to two core fields:
+
+<ParamField body="appMode" param-type="string" show-location="false">
+
+Logical app management mode. Expected values: `"categories"`, `"whitelist"`, or `"blacklist"`. When missing or inconsistent, the UI infers a value based on `appFilter`.
+
+</ParamField>
+
+<ParamField body="appFilter" param-type="boolean | Record<string, boolean | { source: string; tagFilter?: boolean | object }>" show-location="false">
+
+Category filter that encodes both mode and per-category status. At read time this may be a boolean or a record keyed by category source. At write time the mutation expects a simplified `Record<string, boolean>`.
+
+</ParamField>
+
+Mode-to-backend mapping rules:
+
+- **Categories mode**
+  - `appMode: "categories"`
+  - `appFilter` is an object with at least one truthy category entry (see [Category status logic](#category-status-logic-getcategorystatus)).
+- **Whitelist mode**
+  - `appMode: "whitelist"`
+  - `appFilter` is:
+    - `false`, `null`, `undefined`, or
+    - an object where every entry resolves to a falsy category flag.
+- **Blacklist mode**
+  - `appMode: "blacklist"`
+  - `appFilter === true` at read time.
+
+## Mode inference rules
+
+The UI does not trust `appMode` blindly. It uses helper logic (conceptually `inferAppMode` / `useDeviceAppMode`) that prefers an explicit mode but can fall back to `appFilter` when needed.
+
+High‑level inference:
+
+1. If `appMode` is one of `"categories" | "whitelist" | "blacklist"`, use it.
+2. Otherwise, infer from `appFilter`:
+   - If `appFilter === true` → **Blacklist**.
+   - If `appFilter` is an object with at least one category that resolves to `true` → **Categories**.
+   - For all other values (`false`, `null`, `undefined`, empty object, object with all falsy flags) → **Whitelist**.
+
+This keeps the UI stable even when older records are missing `appMode` but still carry a meaningful `appFilter`.
+
+## Read-time config from devices.apps.getConfig
+
+The devices.apps.getConfig query returns app management configuration in a read-optimized shape.
+
+<ParamField body="allowedApps" param-type="Record<string, unknown>" show-location="false">
+
+Map from `appId` (Convex doc id string) to a non-null value (often metadata). Presence of a key means the app is explicitly allowed for this device.
+
+</ParamField>
+
+<ParamField body="blockedApps" param-type="Record<string, unknown>" show-location="false">
+
+Map from `appId` (Convex doc id string) to a non-null value. Presence of a key means the app is explicitly blocked for this device.
+
+</ParamField>
+
+<ParamField body="appFilter" param-type="boolean | Record<string, boolean | { source: string; tagFilter?: boolean | object }>" show-location="false">
+
+Category filter used to derive both the current mode and per-category status. See [Category status logic](#category-status-logic-getcategorystatus).
+
+</ParamField>
+
+<ParamField body="appMode" param-type="string | undefined" show-location="false">
+
+Optional persisted mode string. The UI may ignore or override this if `appFilter` implies a different effective mode.
+
+</ParamField>
+
+Example read-time shape:
+
+```ts
+type AppsConfig = {
+  appMode?: "categories" | "whitelist" | "blacklist"
+  appFilter:
+    | boolean
+    | {
+        [source: string]:
+          | boolean
+          | {
+              source: string
+              tagFilter?: boolean | Record<string, boolean>
+            }
+      }
+  allowedApps: Record<string, { addedAt: number }>
+  blockedApps: Record<string, { addedAt: number }>
+}
+```
+
+You typically derive UI state from these records by:
+
+- Converting `allowedApps` / `blockedApps` record keys into arrays of Convex ids for selection components.
+- Running the mode inference described above.
+- Computing category chips from `appFilter` via `getCategoryStatus`.
+
+<Callout kind="info">
+
+`allowedApps` and `blockedApps` are **read-only record views**. When you update app settings, you must send back full `string[]` arrays of ids, not partial diffs or record patches.
+
+</Callout>
+
+## Category status logic (getCategoryStatus)
+
+`getCategoryStatus` takes the raw `appFilter` value from devices.apps.getConfig and answers: “is this category allowed or blocked?”
+
+The core rules:
+
+- If `appFilter === true` → **all categories allowed**.
+- If `appFilter` is `false`, `null`, or `undefined` → **all categories blocked**.
+- If `appFilter` is a boolean → use it directly for every category.
+- If `appFilter` is an object → resolve per-category status from its entries.
+
+When `appFilter` is an object, each key is a category source and the value is either a boolean or an object with a `tagFilter` field:
+
+```ts
+type AppFilterObject = {
+  [source: string]:
+    | boolean
+    | {
+        source: string
+        tagFilter?: boolean | Record<string, boolean>
+      }
+}
+```
+
+Resolution rules:
+
+1. **Missing category key**  
+   If a category source is not present in the `appFilter` object, treat that category as **allowed by default**.
+
+2. **Boolean entry**  
+   If the entry is a boolean, use that boolean directly:
+
+   - `true` → category allowed.
+   - `false` → category blocked.
+
+3. **Object entry with tagFilter**  
+   If the entry is an object, inspect `tagFilter`:
+
+   - If `tagFilter` is a boolean:
+     - `true` → category allowed.
+     - `false` → category blocked.
+   - If `tagFilter` is an object:
+     - Interpret it as a per-tag map and derive the category status from those tag-level booleans (for example, any tag `true` → category effectively allowed, depending on current business rules).
+
+Because missing categories default to allowed, UI code that renders the category list must assume “allow by default unless we have an explicit block.”
+
+## Write-time mutation contract (useDeviceMutations.updateAppSettings)
+
+To persist App Management changes, the current layout uses a mutation helper like `useDeviceMutations.updateAppSettings`. This mutation does not merge with existing state; it **replaces** the entire app management config segment.
+
+The mutation payload has a write-optimized shape:
+
+```ts
+type UpdateAppSettingsInput = {
+  deviceId: string
+  allowedApps: string[]
+  blockedApps: string[]
+  appFilter: Record<string, boolean>
+}
+```
+
+<ParamField body="allowedApps" param-type="string[]" show-location="false">
+
+Full list of allowed app ids (Convex doc ids). The mutation replaces the stored `allowedApps` record with exactly this set of ids.
+
+</ParamField>
+
+<ParamField body="blockedApps" param-type="string[]" show-location="false">
+
+Full list of blocked app ids (Convex doc ids). The mutation replaces the stored `blockedApps` record with exactly this set of ids.
+
+</ParamField>
+
+<ParamField body="appFilter" param-type="Record<string, boolean>" show-location="false">
+
+Flattened category filter used for persistence. Keys are category sources; values are booleans indicating allowed (`true`) or blocked (`false`). This is a simplified write-time view of the richer read-time `appFilter` shape.
+
+</ParamField>
+
+<Callout kind="info">
+
+`updateAppSettings` treats the payload as **authoritative full state**. If you send only the apps you just toggled and leave out existing ids, you will permanently drop those missing apps from the config. Always derive `allowedApps`, `blockedApps`, and `appFilter` from the current config plus your edits, then send the complete result.
+
+</Callout>
+
+### Typical update flow
+
+1. Call `devices.apps.getConfig` and read the current `allowedApps`, `blockedApps`, and `appFilter`.
+2. Convert `allowedApps` and `blockedApps` record keys to arrays.
+3. Apply UI changes:
+   - Move app ids between arrays for allow/block toggles.
+   - Update `appFilter` booleans per category.
+4. Call `updateAppSettings` with the fully rebuilt arrays and filter map.
+
+Successful updates will reflect in subsequent `devices.apps.getConfig` calls as updated records and filters.
+
+## Blacklist UX and Apple App Store
+
+Blacklist mode has a special relationship with the Apple App Store in the current layout.
+
+- When `appFilter === true` at read time, the system treats the device as being in **Blacklist** mode.
+- The UI computes a `hasAppleAppStore` flag as `true` when `appFilter === true`.
+- This enables specific Apple App Store UI behavior in the App Management section.
+
+<Callout kind="info">
+
+Any code that toggles blacklist mode or the Apple App Store must keep `appFilter === true` as the single source of truth for “Blacklist with Apple App Store allowed.” Do not introduce alternative representations for this state.
+
+</Callout>
+
+## Related
+
+<Columns cols={3}>
+
+<Card title="Settings overview" href="/shomri-hub-current-layout-settings" icon="settings" cta="Review all settings">
+
+Understand where App Management fits within the full Shomri Hub Settings page.
+
+</Card>
+
+<Card title="Browser policies" href="/browser-page" icon="shield" cta="View browser policy behavior">
+
+See how browser policies are applied alongside app management rules.
+
+</Card>
+
+<Card title="Identity and device" href="/shomri-hub-current-layout-identity-and-device" icon="users" cta="Explore identity and device wiring">
+
+Learn how device identity feeds into app config and policy evaluation.
+
+</Card>
+
+</Columns>
