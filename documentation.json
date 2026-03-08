@@ -40,20 +40,7 @@
               },
               {
                 "group": "Pages",
-                "pages": [
-                  {
-                    "title": "Sign In",
-                    "path": "sign-in"
-                  },
-                  {
-                    "title": "App Store",
-                    "path": "home-page"
-                  },
-                  {
-                    "title": "Browser Page",
-                    "path": "browser-page"
-                  }
-                ],
+                "pages": [],
                 "openapi": "api-reference/convex-spec-1771945068335.yaml"
               },
               {
