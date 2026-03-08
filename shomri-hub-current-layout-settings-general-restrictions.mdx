@@ -57,73 +57,73 @@ The current implementation recognizes a fixed set of well-known restriction keys
 
 All of these keys share the same location and type characteristics, so you can document them with `body`-scoped fields that hide the location badge.
 
-<ParamField body="allowAssistant" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowAssistant" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls access to the system voice assistant. `"device"` or `"level"` means the assistant is restricted at that scope; `false` means the assistant is allowed.
 
 </ParamField>
 
-<ParamField body="allowCamera" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowCamera" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls use of the device camera. `"device"` or `"level"` indicates the camera is blocked according to the corresponding policy; `false` means the camera is not restricted.
 
 </ParamField>
 
-<ParamField body="allowScreenShot" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowScreenShot" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls whether users can capture screenshots. Truthy values indicate screenshots are disallowed by the given scope; `false` allows screenshots.
 
 </ParamField>
 
-<ParamField body="allowExplicitContent" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowExplicitContent" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls whether explicit content is blocked in supported services (media, search, etc.). `"device"` or `"level"` means explicit content is restricted; `false` means it is not.
 
 </ParamField>
 
-<ParamField body="allowBookstoreErotica" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowBookstoreErotica" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls whether erotica content from the bookstore is allowed. Truthy values indicate erotica is blocked by that scope; `false` allows it.
 
 </ParamField>
 
-<ParamField body="forceAppStoreRating" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="forceAppStoreRating" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls whether the App Store content rating is enforced. `"device"` or `"level"` means rating limits come from that scope; `false` means there is no enforced rating from this layer.
 
 </ParamField>
 
-<ParamField body="allowInAppPurchases" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowInAppPurchases" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls whether in-app purchases are allowed. Truthy values indicate in-app purchases are blocked by the given scope; `false` allows them.
 
 </ParamField>
 
-<ParamField body="allowVideoConferencing" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowVideoConferencing" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls whether video conferencing apps and features are allowed. `"device"` or `"level"` means they are restricted; `false` means they are allowed.
 
 </ParamField>
 
-<ParamField body="allowYouTube" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowYouTube" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls whether YouTube access is allowed. A truthy value means YouTube is blocked by that scope; `false` allows it.
 
 </ParamField>
 
-<ParamField body="allowSafari" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowSafari" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls whether Safari is available on the device. `"device"` or `"level"` means Safari is blocked; `false` means Safari is allowed.
 
 </ParamField>
 
-<ParamField body="allowAirDrop" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowAirDrop" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls whether AirDrop is available. Truthy values indicate AirDrop is restricted by that scope; `false` allows AirDrop.
 
 </ParamField>
 
-<ParamField body="allowPasscodeModification" param-type="&quot;device&quot; | &quot;level&quot; | false" required="false" show-location="false">
+<ParamField body="allowPasscodeModification" param-type='"device" | "level" | false' required="false" show-location="false">
 
 Controls whether users can modify the device passcode. `"device"` or `"level"` means passcode changes are blocked at that scope; `false` allows modifications.
 
