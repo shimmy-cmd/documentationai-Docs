@@ -1,7 +1,36 @@
 ---
-title: Settings
-description: Understand how Shomri Hub settings scope to an effective device serial and how App Management, Browser Policies, and General Restrictions map to backend data.
+title: Settings layout and data mapping
+description: See how the Shomri Hub Settings tab maps the bottom navigation layout to device- and level-scoped backend configs for apps, browser, and restrictions.
 ---
+
+## Settings in the bottom navigation
+
+Settings is one of the three bottom navigation sections in the Shomri App:
+
+- **Support**
+- **Apps**
+- **Settings**
+
+When you tap **Settings**, the hub resolves an effective device serial and then loads the settings panes for that device so that app, browser, and restriction rules always apply to a specific device, not globally.
+
+## Settings sections in the current layout
+
+The Settings tab contains three main sections:
+
+- **App Management**: controls access to apps through the App Store surface.
+- **Browser Policies**: controls what websites the managed browser can open.
+- **General Restrictions**: controls high-level iOS MDM restrictions such as camera, Safari, screenshots, and in‑app purchases.
+
+The current layout wiring for these sections is:
+
+- **App Management**: exposed as **Open App Store + Block List**. This is implemented as blacklist mode at the device level, where the native app store stays open and you add apps to a blocked list.
+- **Browser Policies**: exposed as **Filtered Browser**. The Browser Settings page uses three tabs:
+  - **Categories**: choose which site categories BlueJay blocks.
+  - **Sites**: manage allowlisted and blocklisted domains.
+  - **Content**: tune NSFW and human detection settings.
+- **General Restrictions**: shown as a toggle list for iOS restriction keys, with a `"Coming Soon"` banner over some stubbed interactions.
+
+Each section still scopes to the same effective serial so that all changes stay local to the selected device context.
 
 ## Scope: effective serial
 
@@ -25,7 +54,9 @@ Settings in App Management, Browser Policies, and General Restrictions are alway
 
 App Management controls which apps are available to install on the device associated with the current effective serial.
 
-The App Management area supports three modes at the device level:
+In the current Shomri App Settings layout, App Management appears as **Open App Store + Block List**. That UI corresponds to **blacklist** mode at the device level: the Apple App Store remains available, and you maintain a blocked list that hides specific apps from the mentee.
+
+Under the hood, the App Management area supports three modes at the device level:
 
 - **Categories**: allow apps based on app categories assigned in the backend.
 - **Whitelist**: allow only apps explicitly whitelisted for the effective serial.
@@ -86,7 +117,7 @@ Reads and writes intentionally use different shapes. `getConfig` returns **recor
 
 ### Mode mapping and inference
 
-The three UI modes map to backend values as follows:
+The three UI modes (including the current **Open App Store + Block List** experience) map to backend values as follows.
 
 #### Categories mode
 
@@ -108,7 +139,7 @@ The actual allowed apps live in `allowedApps`. The app filter itself does not ga
 
 #### Blacklist mode
 
-In **blacklist** mode, device configuration uses:
+In **blacklist** mode, which backs the **Open App Store + Block List** layout:
 
 - `appMode = "blacklist"` (when present).
 - `appFilter = true`.
@@ -193,6 +224,12 @@ Browser Policies define which websites the device browser can access for the cur
 - **Whitelisted Browser**: block all categories and allow access only to explicitly whitelisted sites.
 - **No Browser**: disable the managed browser completely at the Shomri layer.
 
+In the current Settings tab, **Filtered Browser** is the active/default mode. The Browser Settings pane for that device uses three tabs:
+
+- **Categories**: map category chips to `blueJayRules.categories` as the blocked set.
+- **Sites**: edit `allowlist` and `blocklist` entries for domains and URLs.
+- **Content**: control `config.nsfwLevel` and `config.human` for content sensitivity and human blur.
+
 The UI reads and writes browser policies for the effective serial so that changing devices (for example, by changing `useEffectiveSerial` context) immediately switches the active browser rules.
 
 ### Browser config and BlueJay rules
@@ -271,7 +308,7 @@ The Browser Policies UI maps its three modes to `browserMode` and `blueJayRules`
 
 #### Filtered Browser
 
-In **Filtered Browser** mode:
+In **Filtered Browser** mode, which is the current default layout state:
 
 - `browserMode = "categories"`.
 - `blueJayRules` is a populated object with:
@@ -298,7 +335,8 @@ In **No Browser** mode:
 
 - `browserMode = "none"`.
 - `blueJayRules` is disabled: treat it as `false`, `undefined`, or `null`.
-- The managed browser is effectively off; Shomri does not send category or list-based filtering rules for that device.
+
+The managed browser is effectively off; Shomri does not send category or list-based filtering rules for that device.
 
 ### Content filtering levels and human blur
 
@@ -351,6 +389,8 @@ When you call `updateBrowserConfig`, pass only the fields you are changing (for 
 ## General Restrictions
 
 General Restrictions configure high-level iOS restrictions for the device associated with the current effective serial.
+
+The Settings section for General Restrictions appears as a list of toggles mapped to underlying iOS MDM restriction keys. The current layout shows a `"Coming Soon"` banner over parts of this pane while the wiring to write back all keys is still in progress.
 
 The frontend reads these values from a backend restrictions query using the current `deviceConfig` for the effective serial. That query returns a record:
 
@@ -463,7 +503,7 @@ See how users navigate into the Settings area and how identity selection drives 
 
 </Card>
 
-<Card title="App Store layout" href="/shomri-hub-current-layout-app-store" icon="package" cta="View app store">
+<Card title="App Store layout" href="/home-page" icon="package" cta="View app store">
 
 Understand how app availability and App Management settings change which apps appear in the App Store grid.
 

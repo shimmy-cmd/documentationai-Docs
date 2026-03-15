@@ -44,56 +44,117 @@
                 "openapi": "api-reference/convex-spec-1771945068335.yaml"
               },
               {
-                "group": "Shomri Hub Current Layout",
+                "group": "Shomri App — Current Layout",
                 "pages": [
                   {
-                    "group": "Settings",
+                    "group": "Login",
+                    "icon": "circle-user",
                     "pages": [
                       {
-                        "title": "Settings: Browser Policies",
-                        "path": "shomri-hub-current-layout-settings-browser-policies"
+                        "title": "Login Screen",
+                        "path": "sign-in",
+                        "icon": "circle-user"
                       },
                       {
-                        "title": "Settings: General Restrictions",
-                        "path": "shomri-hub-current-layout-settings-general-restrictions"
+                        "title": "Roles",
+                        "path": "shomri-hub-current-layout-roles"
                       },
                       {
-                        "title": "Settings: Levels",
-                        "path": "shomri-hub-current-layout-settings-levels"
-                      },
-                      {
-                        "title": "Settings: App Management",
-                        "path": "shomri-hub-current-layout-settings-app-management"
+                        "title": "Identity & device",
+                        "path": "shomri-hub-current-layout-identity-and-device"
                       }
                     ]
                   },
                   {
-                    "title": "Architecture",
-                    "path": "shomri-hub-current-layout-architecture"
+                    "group": "Apps",
+                    "icon": "box",
+                    "pages": [
+                      {
+                        "title": "Apps (App Store)",
+                        "path": "home-page",
+                        "icon": "box"
+                      },
+                      {
+                        "title": "App Details",
+                        "path": "app-page"
+                      },
+                      {
+                        "group": "Implementation notes",
+                        "pages": [
+                          {
+                            "title": "App Store (current layout wiring)",
+                            "path": "shomri-hub-current-layout-app-store"
+                          },
+                          {
+                            "title": "SKOverlay",
+                            "path": "eli-docs/frontend/shomri-hub/skoverlay"
+                          }
+                        ]
+                      }
+                    ]
                   },
                   {
-                    "title": "App Store",
-                    "path": "shomri-hub-current-layout-app-store"
+                    "group": "Support",
+                    "icon": "headset",
+                    "pages": [
+                      {
+                        "title": "Support",
+                        "path": "contact-page",
+                        "icon": "headset"
+                      }
+                    ]
                   },
                   {
-                    "title": "Install and Updates",
-                    "path": "shomri-hub-current-layout-install-and-updates"
-                  },
-                  {
-                    "title": "External Services",
-                    "path": "shomri-hub-current-layout-external-services"
-                  },
-                  {
-                    "title": "Identity and Device",
-                    "path": "shomri-hub-current-layout-identity-and-device"
-                  },
-                  {
-                    "title": "Requests",
-                    "path": "shomri-hub-current-layout-requests"
-                  },
-                  {
-                    "title": "Roles",
-                    "path": "shomri-hub-current-layout-roles"
+                    "group": "Settings",
+                    "icon": "cog",
+                    "pages": [
+                      {
+                        "title": "Settings",
+                        "path": "shomri-hub-current-layout-settings"
+                      },
+                      {
+                        "title": "Browser page",
+                        "path": "browser-page",
+                        "icon": "earth"
+                      },
+                      {
+                        "title": "Browser Policies",
+                        "path": "shomri-hub-current-layout-settings-browser-policies"
+                      },
+                      {
+                        "title": "App Management",
+                        "path": "shomri-hub-current-layout-settings-app-management"
+                      },
+                      {
+                        "title": "General Restrictions",
+                        "path": "shomri-hub-current-layout-settings-general-restrictions"
+                      },
+                      {
+                        "title": "Levels",
+                        "path": "shomri-hub-current-layout-settings-levels"
+                      },
+                      {
+                        "title": "App updates",
+                        "path": "shomri-hub-current-layout-install-and-updates"
+                      },
+                      {
+                        "title": "External services",
+                        "path": "shomri-hub-current-layout-external-services"
+                      },
+                      {
+                        "title": "Architecture",
+                        "path": "shomri-hub-current-layout-architecture"
+                      },
+                      {
+                        "group": "Requests",
+                        "pages": [
+                          {
+                            "title": "Requests",
+                            "path": "shomri-hub-current-layout-requests"
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -437,7 +498,7 @@
                 ]
               }
             ],
-            "icon": "activity-square"
+            "icon": "square-activity"
           }
         ]
       }

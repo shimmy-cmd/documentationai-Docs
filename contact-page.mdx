@@ -1,77 +1,89 @@
 ---
-title: Contact page
-description: Configure the Shomri Hub contact page so users can reach support quickly via Gleap, WhatsApp, email, or phone using external integrations and deep links.
+title: Support tab
+description: Configure the Shomri App bottom-nav Support section so users can reach chat and WhatsApp now, with call, text, and email marked as coming soon.
 ---
 
-## Purpose of the contact page
+## Purpose of the Support tab
 
-The contact page in Shomri Hub gives users a single place to reach your support team quickly using their preferred channel: Gleap, WhatsApp, email, or phone.
+The Support tab in the Shomri App bottom navigation gives users a single place to reach your support team, with a primary in-app chat plus additional channels.
 
-Each option is represented as a card that either opens an external integration (such as Gleap) or triggers an operating system deep link (such as opening the dialer or mail client).
+Each option appears as a card that either opens an embedded chat experience, launches WhatsApp, or triggers an operating system deep link (such as opening the dialer or mail client) when those channels are available.
 
 <Callout kind="info">
 
-All contact methods on this page are implemented as external integrations or OS deep links. Configure the targets to match your own support channels.
+Current Support options include Chat with Us and WhatsApp. Call, Text, and Email are planned channels; you can surface them as disabled or hide them from the UI until they are ready.
 
 </Callout>
 
 ## UI structure
 
-The contact page layout uses a simple grid of cards, one for each contact method.
+The Support tab layout uses a simple grid of cards, one for each contact method.
 
 <Columns cols={2}>
-  <Card title="Gleap" icon="help-circle" href="Gleap-integration-or-widget-trigger">
+  <Card title="Chat with Us" icon="message-circle" href="in-app-chat-trigger-or-support-widget">
 
-    Opens the Gleap feedback widget or app so users can submit bug reports, feature requests, or general feedback without leaving Shomri Hub.
+    Opens the primary in-app chat experience so users can message your support team without leaving the Shomri App.
 
   </Card>
   <Card title="WhatsApp" icon="message-circle" href="whatsapp-deep-link-or-api-url">
 
-    Starts a WhatsApp conversation with your support number using a WhatsApp deep link, prefilled with an optional introductory message.
+    Starts a WhatsApp conversation with your support number using a WhatsApp deep link, optionally prefilled with an introductory message.
 
   </Card>
-  <Card title="Email" icon="mail" href="mailto:support@your-company.com">
+  <Card title="Call support" icon="phone" href="tel:+10000000000">
 
-    Launches the default email client using a mailto link addressed to your support inbox, optionally including a subject or template body.
+    Opens the phone dialer using a tel link so users can call your support line when this channel is available. Treat this card as disabled or hide it until calling support is live.
 
   </Card>
-  <Card title="Phone" icon="phone" href="tel:+10000000000">
+  <Card title="Text support" icon="message-circle" href="sms:+10000000000">
 
-    Opens the phone dialer using a tel link so users can call your support line directly from their device.
+    Triggers the default SMS app using an sms link so users can text your support number once this channel is live. Mark this as coming soon or omit it from the grid until ready.
+
+  </Card>
+  <Card title="Email support" icon="mail" href="mailto:support@your-company.com">
+
+    Launches the default email client using a mailto link addressed to your support inbox. Keep this card visually marked as coming soon or disabled until your email workflow is configured.
 
   </Card>
 </Columns>
 
-Use icons that match your design system. The values shown in `href` are examples; replace them with your own integration or deep-link targets.
-
-## Behavior and flow
-
-When a user taps or clicks a contact card:
-
-- **Gleap** opens an embedded widget or an external Gleap view, depending on how you integrate it.
-- **WhatsApp** uses a URL such as `https://wa.me/` or a platform-specific scheme to open the WhatsApp app.
-- **Email** relies on a `mailto:` link so the OS opens the preferred email client.
-- **Phone** uses a `tel:` link to open the dialer with the number prefilled.
-
-Successful configuration routes the user directly into the correct support channel without extra intermediate screens.
-
-## Configuration guidelines
-
-Configure each contact method by setting the correct target for its card `href` and ensuring the corresponding integration is active in your environment.
+Use icons that match your design system and clearly indicate which cards are active versus coming soon. The values shown in `href` are examples; replace them with your own integration or deep-link targets.
 
 <Callout kind="info">
 
-Use placeholders while developing and replace them with production values before launch. Test each integration on all target platforms (web, iOS, Android) to confirm that links open the correct app.
+For Call, Text, and Email, configure the backend links early but keep the cards hidden or non-interactive in production until your support processes for these channels are ready.
 
 </Callout>
 
-### Gleap integration
+## Behavior and flow
 
-Gleap typically requires an SDK or script snippet plus a trigger.
+When a user taps or clicks a Support card:
 
-- Use the card `href` or click handler to call the Gleap `open` or `feedback` function.
-- Ensure you initialize Gleap with your project key before rendering the contact page.
-- Decide whether to open a general feedback form or a preconfigured flow (for example, bug report).
+- **Chat with Us** opens the in-app support chat or embedded widget, anchored in the current Shomri App session.
+- **WhatsApp** uses a URL such as `https://wa.me/` or a platform-specific scheme to open the WhatsApp app with your support number.
+- **Call support** uses a `tel:` link to open the dialer with the number prefilled once enabled.
+- **Text support** uses an `sms:` link to open the messaging app with your support number.
+- **Email support** relies on a `mailto:` link so the OS opens the preferred email client with your support inbox.
+
+Successful configuration routes the user directly into the correct support channel without extra intermediate screens or confirmation dialogs.
+
+## Configuration guidelines
+
+Configure each Support option by setting the correct target for its card `href` and ensuring the corresponding integration is active in your environment.
+
+<Callout kind="info">
+
+Use staging endpoints while developing and replace them with production values before launch. Test active channels (Chat and WhatsApp) on all target platforms (web, iOS, Android) to confirm that links or widgets open correctly.
+
+</Callout>
+
+### Chat with Us integration
+
+Chat with Us represents your primary in-app support experience.
+
+- Use the card `href` or click handler to trigger your chat widget or open a dedicated Support chat screen.
+- Initialize any third-party chat SDKs or internal messaging services before rendering the Support tab.
+- Decide whether to always open a new conversation or resume the most recent thread for the current user.
 
 ### WhatsApp deep link
 
@@ -80,51 +92,34 @@ WhatsApp supports platform-independent deep links using HTTPS URLs.
 Common patterns:
 
 - `https://wa.me/` followed by your full phone number in international format.
-- Optional query parameters to prefill the message text.
+- Optional query parameters to prefill the message text with context such as the app version or user identifier.
 
 If you target native apps, you can also use platform schemes where supported, but start with HTTPS links for broad compatibility.
 
-### Email link
+### Call, Text, and Email coming soon
 
-Email uses standard `mailto:` URLs.
+Prepare deep links for future channels even if the UI keeps them hidden or disabled.
 
-- Set the `href` to `mailto:support@your-company.com`.
-- Optionally append query parameters such as `?subject=Support request&body=Describe your issue` to guide users.
+- **Call support**: set `href` to `tel:+10000000000` with your international-format support line.
+- **Text support**: use `sms:+10000000000` or a platform-equivalent scheme to open the default messaging app.
+- **Email support**: use a `mailto:` URL such as `mailto:support@your-company.com` with optional subject and body query parameters.
 
-Test that the email client opens with the correct recipient and that your support tooling handles incoming messages from this address.
-
-### Phone link
-
-Phone calls use the `tel:` scheme.
-
-- Set the `href` to `tel:+10000000000`, replacing the number with your international-format support line.
-- Confirm the number is reachable during the hours you advertise in your product.
-
-On desktop browsers without phone capabilities, some users may see no-op behavior, so pair phone with at least one text channel.
+Align your UI state (hidden, disabled, or tagged as coming soon) with the real availability of each channel so users know which options they can rely on today.
 
 ## Placeholder values and production setup
 
-Because contact details are specific to each deployment, Shomri Hub does not hard-code URLs or phone numbers.
+Because Support contact details are specific to each deployment, Shomri does not hard-code URLs or phone numbers.
 
 Use clear, non-production placeholders during development, such as:
 
 - `mailto:support+staging@your-company.com`
 - `tel:+19999999999`
+- `sms:+19999999999`
 - `https://wa.me/19999999999?text=Support%20staging`
-- A Gleap sandbox project key or test environment
+- A staging endpoint or sandbox configuration for your in-app chat service
 
 Before releasing to users:
 
-- Replace all placeholders with your live support endpoints.
-- Verify that your support team monitors each channel.
-- Align the labels and descriptive text on the cards with your support policies (for example, “24/7 chat” vs “Business hours only”).
-
-## Implementation checklist
-
-Use this checklist to confirm your contact page is correctly wired.
-
-- **Design**: Four cards are visible for Gleap, WhatsApp, Email, and Phone.
-- **Targets**: Each card `href` is set to a valid integration URL or deep link, with no placeholder values remaining.
-- **Environment**: Gleap and any other external tools are initialized and authenticated where required.
-- **Testing**: Each card opens the expected app or client on all supported platforms.
-- **Support readiness**: Your team has routing and response processes for every enabled channel.
+- Replace all placeholders with your live Support endpoints.
+- Verify that your support team monitors every active channel.
+- Align the labels and descriptive text on the cards with your support policies (for example, “Live chat (business hours)” vs “WhatsApp within 24 hours”).

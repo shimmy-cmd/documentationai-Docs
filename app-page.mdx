@@ -1,36 +1,99 @@
 ---
 title: App page
-description: Define the App Details and App Settings experiences in Shomri Hub, including UI behavior and APIs for mentee/child and self-managed devices.
+description: Model the Shomri Hub App Details screen and App Settings behavior, including install flow states, UI layout, and underlying configuration APIs.
 ---
 
 ## Purpose
+
+Surface a single app from the Shomri Hub App Store with rich details and an install flow, then expose app-level settings that respect device policy and user role.
 
 - Present detailed information for a selected app and hand off installation to the Apple App Store.
 - Expose app-related configuration for a device, with different behaviors for mentee/child versus self-managed devices.
 
 <Callout kind="info">
 
-App Settings use the same underlying configuration API for both mentee/child and self-managed devices. The difference is how users change settings: mentees submit requests, while self-managed users update configuration directly.
+The App Details page opens when the user taps an app card on the App Store page. The same underlying configuration API powers App Settings for both mentee/child and self-managed devices; the difference is how users change settings.
 
 </Callout>
 
-## App Details page
+## App Details page layout
 
-The App Details page mirrors an app store product page: it shows app metadata, description, screenshots, and a primary button that opens an overlay to download the app from the Apple App Store.
+The App Details page mirrors an app store product page with a Shomri header and install controls.
 
-### What the user sees
+### Entry point and navigation
 
-- App icon, name, and publisher.
-- Ratings and category (if available from metadata).
-- Long description and key highlights.
-- Screenshots, typically in a horizontal gallery.
-- A primary **Download from App Store** button.
+- The user starts on the Shomri Hub **App Store** page (`/home-page`), which lists available apps.
+- When they tap an app tile, open the **App Details** page for that app.
+- Keep global navigation (sidebar/top bar) consistent so users can navigate back to the App Store.
 
-When the user clicks the download button, show an overlay that deep-links into the Apple App Store for the app.
+### Key UI elements
+
+Design the top of the App Details page around the app identity and a primary action.
+
+- **Icon** — Large app icon, matching the App Store asset.
+- **Name** — Human-readable app name (from metadata).
+- **Publisher** — Developer or seller name under the title.
+- **Category** — Primary category label (for example, Education, Utilities).
+- **Rating** — Average rating score and count when available.
+- **Primary action button** — Contextual label and state:
+  - `Install` (app not installed)
+  - `Installing` (installation in progress)
+  - `Open` (installed on the current device)
+
+Below the header and button, show:
+
+- **Description** — Full app description, with optional "Show more" expand behavior.
+- **Highlights** — Key capabilities as a short bullet list, when available.
+- **Screenshots** — Horizontal scroll gallery, preserving App Store aspect ratio.
+- **Policy/app settings entry** — Optional link or section leading to the App Settings view for this app on the current device.
+
+### Install button states and flow
+
+Use a clear, linear flow that matches the Shomri App install experience.
+
+<Steps>
+
+<Step title="Install" icon="download">
+
+- Show an **Install** button when the app is not yet installed on the current device.
+- When the user taps **Install**, trigger your `devices.apps.install` flow and, if needed, open the overlay that will deep-link to the Apple App Store.
+- Immediately transition the button label and state to **Installing** to acknowledge the action.
+
+</Step>
+
+<Step title="Installing" icon="play-circle">
+
+- While the install job runs, keep the button disabled and labeled **Installing`.
+- Optionally show a lightweight progress indicator or spinner inside the button.
+- Poll installation status with `apps.list.allOnDeviceWithStatus` or subscribe to your install tracking so you can move to **Open** when complete.
+
+</Step>
+
+<Step title="Open" icon="check-circle">
+
+- After the install completes on the target device, update the button to **Open**.
+- Tapping **Open** should:
+  - On the managed device: open the installed app (for example, via a deeplink from the device agent).
+  - On a management-only device: show instructions or confirmation, not the native app itself.
+- If the app is later uninstalled, fall back to the **Install** state again.
+
+</Step>
+
+</Steps>
+
+<Callout kind="tip">
+
+Keep the primary button stable in layout; only change its label and state. This avoids layout shifts while the app moves between Install, Installing, and Open states.
+
+</Callout>
+
+## App Details data: Apple Lookup API
+
+The App Details page uses metadata from Apple to stay in sync with the public App Store listing while letting Shomri control install behavior.
 
 ### Data source: Apple Lookup API
 
-Use the Apple Lookup API to fetch app metadata based on the App Store `trackId`.
+Use the Apple Lookup API to fetch app metadata based on the App Store `trackId`. Combine this with your own catalog fields (for example, Shomri-specific tags or policy defaults) when you build the page model.
 
 #### Inputs
 
@@ -42,7 +105,7 @@ The Apple App Store identifier for the app. Persist this on the app record in yo
 
 #### Outputs (metadata shape)
 
-Treat the Apple Lookup API response as `{ metadata }` for the UI. The exact Apple payload is large; pull out the fields you need for the screen.
+Treat the Apple Lookup API response as `metadata` for the UI. The exact Apple payload is large; pull out the fields you need for the App Details layout.
 
 <ParamField body="metadata" param-type="object" required="true">
 
@@ -58,7 +121,7 @@ Human-readable app name used for the header.
 
 <ParamField body="metadata.bundleId" param-type="string">
 
-Bundle identifier for the app, used to correlate with device configuration when needed.
+Bundle identifier for the app, used to correlate with device configuration and install status.
 
 </ParamField>
 
@@ -131,11 +194,13 @@ curl "https://itunes.apple.com/lookup?id=871761612"
 
 </CodeGroup>
 
-Map this response into the `{ metadata }` shape your UI expects.
+Map this response into the `metadata` shape your UI expects. For example, map `trackName` to `metadata.name`, `sellerName` to `metadata.developerName`, `primaryGenreName` to `metadata.category`, `averageUserRating` to `metadata.rating`, `screenshotUrls` to `metadata.screenshots`, and `trackViewUrl` to `metadata.storeUrl`.
 
-## App Settings — Mentee/Child
+When the user taps **Install** or **Open in App Store**, show an overlay that deep-links to `metadata.storeUrl` in the Apple App Store.
 
-The mentee/child App Settings view shows the current configuration for a device and lets the user request, but not apply, changes.
+## App Settings view — Mentee/Child
+
+The mentee/child App Settings view shows the current configuration for this app on a device and lets the user request, but not apply, changes.
 
 <Callout kind="info">
 
@@ -145,7 +210,7 @@ Mentees cannot change policy directly. When they tap a setting they do not have,
 
 ### View configuration
 
-Use `api.devices.apps.getConfig` to populate the App Settings view for a specific device.
+Use `api.devices.apps.getConfig` to populate the App Settings view for a specific device. Link into this view from the App Details page when the user wants to understand why an app is blocked or request access.
 
 #### Inputs
 
@@ -210,11 +275,11 @@ List of app bundle identifiers that are explicitly blocked on the device.
 
 </CodeGroup>
 
-Render sections for AppMode, Categories, Whitelist, Blacklist, and Network Rules. For mentees, treat these sections as mostly read-only, with entry points into the request flow.
+Render sections for AppMode, Categories, Whitelist, Blacklist, and Network Rules. For mentees, keep these sections mostly read-only, with entry points into the request flow when they tap something they want to change.
 
 ### Request app or policy change
 
-When a mentee interacts with a configuration they do not have (for example, tapping a blocked app they want to allow), trigger a modal.
+When a mentee interacts with a configuration they do not have (for example, tapping a blocked app they want to allow from the App Details page or App Settings view), trigger a modal.
 
 #### Modal behavior
 
@@ -224,7 +289,7 @@ When a mentee interacts with a configuration they do not have (for example, tapp
 
 <Callout kind="tip">
 
-You will likely define additional request types for specific changes, such as network rules updates or mode changes. Keep the modal flexible to support multiple `type` and `target` values.
+Define additional request types for specific changes, such as network rules updates or mode changes. Keep the modal flexible to support multiple `type` and `target` values.
 
 </Callout>
 
@@ -295,13 +360,13 @@ Initial status of the request, such as `pending`.
 
 After a successful response, close the modal and show a confirmation state indicating that the request is awaiting approval.
 
-## App Settings — Self-managed
+## App Settings view — Self-managed
 
 Self-managed users see the same configuration sections (AppMode, Categories, Whitelist, Blacklist, Network Rules) but can update settings directly without approval workflows.
 
 <Callout kind="info">
 
-Self-managed flows call the same `api.devices.apps.getConfig` for reads but use direct update APIs for writes. Avoid reusing the mentee request modal; instead, apply changes immediately and surface any errors inline.
+Self-managed flows call the same `api.devices.apps.getConfig` for reads but use direct update APIs for writes. Do not reuse the mentee request modal; instead, apply changes immediately and surface any errors inline.
 
 </Callout>
 
@@ -311,6 +376,7 @@ Reuse `api.devices.apps.getConfig` with the same input and output contract as th
 
 - Use `appMode` and `appFilter` to drive toggles and selectors.
 - Allow inline editing of `allowedApps` and `blockedApps`, for example through multi-select lists or search-and-add patterns.
+- From the App Details page, link to this App Settings view so self-managed users can adjust how the app behaves on their device.
 
 ### Direct updates: apps configuration
 
@@ -411,7 +477,7 @@ Resulting blocked apps list after the update.
 
 ### Direct updates: network rules
 
-Use `Devices.restrictions.update` to change network-related policies, such as domain filters or firewall-style rules.
+Use `Devices.restrictions.update` to change network-related policies, such as domain filters or firewall-style rules that affect how apps access the web.
 
 #### Inputs
 
@@ -456,4 +522,4 @@ Array of network rule objects to apply to the device. Define the rule shape cons
 
 </CodeGroup>
 
-Apply optimistic UI updates where appropriate, but always reconcile with the API response or a follow-up `api.devices.apps.getConfig` call to keep the App Settings page in sync.
+Apply optimistic UI updates where appropriate, but always reconcile with the API response or a follow-up `api.devices.apps.getConfig` call to keep the App Settings view in sync with the actual device state.

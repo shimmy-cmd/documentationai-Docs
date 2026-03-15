@@ -1,44 +1,71 @@
 ---
 title: Sign in
-description: >-
-  Define the Shomri Hub sign-in flow, reset behavior, header UI after login, and
-  the Clerk authentication APIs that back each screen.
+description: Define the Shomri Hub sign-in flow, reset behavior, post-login header UI, and the Clerk authentication APIs backing each screen.
 ---
+
 ## Sign-in screen
 
-The sign-in screen authenticates pre-provisioned Shomri Hub users by email and password.
+The sign-in screen authenticates pre-provisioned Shomri Hub users by email and password and then routes them into the Apps (App Store) page as the default home screen.
 
 ### UI
 
 - App logo centered at the top
-
 - **Email** field
-
 - **Password** field
-
+- **Password visibility toggle** for the password field
 - **Sign in** primary button
-
 - **Forgot password?** link to start password reset
+- Optional inline error messaging for invalid credentials or server issues
 
-- Optional error messaging inline (for invalid credentials or server issues)
+### User flow
 
-### Behavior
+<Steps>
 
-- Authenticate the user using Clerk `signIn.create` with `identifier` and `password`
+  <Step title="Enter credentials" icon="terminal">
 
-- On successful sign-in, create a session and route into the main app shell (with header)
+  - User types their **email** and **password**.
+  - User optionally uses the **password visibility toggle** to verify the password.
+  - User selects **Sign in**.
 
-- On failed sign-in, keep the user on this screen and surface an appropriate error message
+  </Step>
 
-<Callout kind="info" collapsed="false">
-  Shomri Hub supports sign-in for pre-provisioned users only. Do not expose any self-service sign-up or registration flows.
+  <Step title="Authenticate with Clerk" icon="lock">
+
+  - Frontend calls Clerk `signIn.create` with `identifier` and `password`.
+  - If Clerk returns `status: complete`, create a session from `sessionId`.
+  - If Clerk returns an error, stay on the sign-in screen and show a generic error.
+
+  </Step>
+
+  <Step title="Route into Shomri Hub" icon="arrow-right">
+
+  - On successful sign-in, route the user into the main app shell.
+  - Set the **Apps (App Store)** page as the initial screen, with the bottom nav visible (`Support`, `Apps`, `Settings`).
+  - Ensure the header and profile icon reflect the authenticated user.
+
+  </Step>
+
+</Steps>
+
+<Callout kind="info">
+
+  Shomri Hub supports sign-in for pre-provisioned users only. Do not expose any self-service sign-up or registration flows from the login screen or elsewhere in the app.
+
 </Callout>
 
-<Callout kind="note" collapsed="false">
-  If any flow discovers that the current user is not provisioned (for example, missing account mapping, revoked access, or unknown identity), redirect back to the sign-in screen.
+<Callout kind="note">
+
+  If any flow discovers that the current user is not provisioned (for example, missing account mapping, revoked access, or unknown identity), redirect back to the sign-in screen and show a generic access error.
+
 </Callout>
 
-## API: [Clerk signIn.create (sign in)](/devicesadd)
+<Callout kind="note">
+
+  Keep authentication error messages generic (for example, `Email or password is incorrect`) to avoid leaking which specific field failed or whether an account exists.
+
+</Callout>
+
+## API: Clerk signIn.create (sign in)
 
 Use `signIn.create` to authenticate a user with their email and password from the sign-in screen.
 
@@ -59,7 +86,7 @@ Use `signIn.create` to authenticate a user with their email and password from th
 </ParamField>
 
 <ParamField body="user" param-type="object" required="true" deprecated="false">
-  Clerk user object for the authenticated user. Use fields like `firstName`, `lastName`, and `primaryEmailAddress` when rendering the header and profile modal.
+  Clerk user object for the authenticated user. Use fields like `firstName`, `lastName`, and `primaryEmailAddress` when rendering the header and User Account Panel.
 </ParamField>
 
 <ParamField body="status" param-type="string" required="true" deprecated="false">
@@ -69,6 +96,7 @@ Use `signIn.create` to authenticate a user with their email and password from th
 ### Example request and response
 
 <CodeGroup show-lines="true" tabs={[]}>
+
   ```json
   {
     "identifier": "maya.levi@contosohealth.com",
@@ -95,20 +123,20 @@ Use `signIn.create` to authenticate a user with their email and password from th
     }
   }
   ```
+
 </CodeGroup>
 
 ### UI integration notes
 
-- On `status: complete`, store or propagate `sessionId` to your session middleware and route the user into the main app.
-
+- On `status: complete`, store or propagate `sessionId` to your session middleware and route the user into the main app, with **Apps (App Store)** as the initial screen.
 - If Clerk returns an error (for example, invalid credentials), keep the user on the sign-in page and show an error message without exposing which field is incorrect.
+- Ensure the bottom nav (`Support`, `Apps`, `Settings`) and header are only rendered when a valid session exists.
 
 ## Password reset flow
 
 The password reset flow starts from the **Forgot password?** link on the sign-in screen and typically spans two screens:
 
 - **Request reset code** (enter email or phone)
-
 - **Enter code and new password** (change password)
 
 ### Request reset code screen
@@ -116,20 +144,21 @@ The password reset flow starts from the **Forgot password?** link on the sign-in
 #### UI
 
 - Logo
-
 - **Email** field (or other identifier, depending on your Clerk configuration)
-
 - **Send reset code** button
-
 - Link back to the main sign-in screen
 
 #### Behavior
 
-- Use `signIn.create` in reset mode to send a reset code to the provided identifier
+- Use `signIn.create` in reset mode to send a reset code to the provided identifier.
+- On success, transition to the **Change password** screen.
+- On error (for example, identifier not found), optionally show a generic error and keep the user on this screen.
 
-- On success, transition to the **Change password** screen
+<Callout kind="note">
 
-- On error (for example, identifier not found), optionally show a generic error and keep the user on this screen
+  Do not confirm whether the email exists. Error messages for missing or invalid identifiers should remain generic to prevent user enumeration.
+
+</Callout>
 
 ## API: Clerk signIn.create (reset)
 
@@ -162,6 +191,7 @@ Use `signIn.create` with a reset strategy to initiate password reset by sending 
 ### Example request and response
 
 <CodeGroup show-lines="true" tabs={[]}>
+
   ```json
   {
     "strategy": "reset_password_email_code",
@@ -183,12 +213,12 @@ Use `signIn.create` with a reset strategy to initiate password reset by sending 
     }
   }
   ```
+
 </CodeGroup>
 
 ### UI integration notes
 
 - After a successful reset initiation, show a confirmation message like `We sent a code to your email` and move to the **Change password** screen.
-
 - Do not confirm whether the email exists; keep error messages generic to avoid leaking user existence.
 
 ## Change password screen
@@ -198,24 +228,17 @@ The change password screen verifies the reset code and sets a new password.
 ### UI
 
 - Logo
-
 - **Reset code** input (from email or SMS)
-
 - **New password** input
-
 - **Confirm new password** input (optional but recommended)
-
 - **Change password** primary button
-
 - Link back to the main sign-in screen
 
 ### Behavior
 
-- Use `signIn.attemptFirstFactor` with the reset strategy, `code`, and new `password`
-
-- On success, Clerk returns `sessionId`, `user`, and `status`; treat this as a signed-in state and route to the main app
-
-- On invalid or expired code, keep the user on this screen and show an error, optionally offering to resend the code from the previous step
+- Use `signIn.attemptFirstFactor` with the reset strategy, `code`, and new `password`.
+- On success, Clerk returns `sessionId`, `user`, and `status`; treat this as a signed-in state and route to the main app.
+- On invalid or expired code, keep the user on this screen and show an error, optionally offering to resend the code from the previous step.
 
 ## API: Clerk signIn.attemptFirstFactor (change password)
 
@@ -252,6 +275,7 @@ Use `signIn.attemptFirstFactor` to verify the reset code and set the user's new 
 ### Example request and response
 
 <CodeGroup show-lines="true" tabs={[]}>
+
   ```json
   {
     "strategy": "reset_password_email_code",
@@ -279,60 +303,57 @@ Use `signIn.attemptFirstFactor` to verify the reset code and set the user's new 
     }
   }
   ```
+
 </CodeGroup>
 
 ### UI integration notes
 
-- Treat a successful password change as a completed sign-in. Redirect the user into the main app, not back to the sign-in page.
-
+- Treat a successful password change as a completed sign-in. Redirect the user into the main app, with **Apps (App Store)** as the landing page, not back to the sign-in page.
 - If `status` is not `complete`, inspect the response to determine whether further factors are required and present additional UI if needed.
 
-## Header (after login)
+## Header and User Account Panel (after login)
 
-After a successful sign-in (or completed password reset), Shomri Hub shows a persistent header across the app.
+After a successful sign-in (or completed password reset), Shomri Hub shows a persistent header with a profile icon that opens the User Account Panel.
 
 ### Header UI
 
-- **Left:** Shomri Hub logo or product name
+- **Left:** Shomri Hub logo or product name.
+- **Right:** Profile avatar or initial-based icon.
+- Clicking the profile icon opens the **User Account Panel** anchored to the header.
 
-- **Right:** Profile avatar or initial-based icon
+### User Account Panel content
 
-- Clicking the profile icon opens a **profile modal** anchored to the header
+Populate the User Account Panel from the Clerk `user` object and the mapped Shomri account metadata.
 
-### Profile modal content
+- **Name:** `user.firstName` + `user.lastName`.
+- **Account email:** `user.primaryEmailAddress.emailAddress`.
+- **Account status:** derived from the provisioned Shomri account (for example, active, suspended).
+- **Account type:** `Self-Managed` for the current layout.
+- **Sign out** button.
 
-Populate the profile modal from the Clerk `user` object returned in the sign-in responses.
+<Callout kind="info">
 
-- **Name:** `user.firstName` + `user.lastName`
+  Always derive header and User Account Panel fields from the authenticated Clerk `user` object and the associated Shomri account record for the active `sessionId`. Do not cache or hard-code user details or account type.
 
-- **Email:** `user.primaryEmailAddress.emailAddress`
-
-- **Phone:** `user.primaryPhoneNumber.phoneNumber` (if available)
-
-- **Sign out** button
-
-<Callout kind="info" collapsed="false">
-  Always derive header and profile modal fields from the authenticated Clerk `user` object associated with the active `sessionId`. Do not cache or hard-code user details.
 </Callout>
 
 ### API: useClerk().signOut() (sign out)
 
-Use `useClerk().signOut()` from the profile modal to end the current session and route the user back to the sign-in page.
+Use `useClerk().signOut()` from the User Account Panel to end the current session and route the user back to the sign-in page.
 
 #### Behavior
 
-- Clear the active Clerk session in the client and backend
-
-- Invalidate any local session state tied to `sessionId`
-
-- Redirect to the sign-in screen
+- Clear the active Clerk session in the client and backend.
+- Invalidate any local session state tied to `sessionId`.
+- Redirect to the sign-in screen.
+- Remove the header and bottom nav until a new valid session exists.
 
 ### Example sign-out handler
 
 ```ts
 import { useClerk } from "@clerk/clerk-react"
 
-export function ProfileMenu() {
+export function UserAccountPanel() {
   const { signOut, user } = useClerk()
 
   const handleSignOut = async () => {
@@ -354,6 +375,4 @@ export function ProfileMenu() {
 Ensure all authenticated routes enforce the following:
 
 - If there is **no valid session** or the current session user is **not provisioned** for Shomri Hub, route the user to the sign-in page.
-
-- If a valid, provisioned session exists, render the app with the header and profile modal available on every screen.
-
+- If a valid, provisioned session exists, render the app with the header, bottom nav (`Support`, `Apps`, `Settings`), and User Account Panel available on every screen.

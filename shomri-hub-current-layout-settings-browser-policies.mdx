@@ -7,6 +7,8 @@ description: Understand how browserMode, BlueJay rules, NSFW levels, and list no
 
 Browser Policies control whether the in-app browser is disabled, category-filtered, or whitelist-only, and how BlueJay evaluates specific URLs.
 
+In the current Settings layout, the default mode is **Filtered Browser**, and the Browser Policies UI is organized into three tabs: **Categories**, **Sites**, and **Content**. The Categories tab drives which categories are blocked, Sites manages allowlist and blocklist entries, and Content controls NSFW and related BlueJay config.
+
 This page focuses on the runtime shape of `browserMode`, `blueJayRules`, and the helper utilities used by the current Shomri Hub layout.
 
 ## Browser modes and BlueJay mapping
@@ -296,7 +298,7 @@ In both cases, `updateBrowserConfig` produces a full `blueJayRules` object, so c
 
 <Card
   title="App Management settings"
-  href="/shomri-hub-current-layout-app-store"
+  href="/shomri-hub-current-layout-settings-app-management"
   icon="package"
   cta="Manage apps"
 />

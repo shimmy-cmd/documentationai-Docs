@@ -1,84 +1,190 @@
 ---
 title: App Store
-description: >-
-  Define the App Store listing, App Details, and App Settings flows in Shomri
-  Hub, including UI behavior and APIs for mentee, child, and self-managed
-  devices.
+description: Define the App Store listing, App Details, and App Settings flows in Shomri Hub, including UI behavior and APIs for mentee, child, and self-managed devices.
 sidebar_position: 2
 ---
-# App Store
 
-The App Store page is the main listing experience for Shomri App Store. It displays apps available to the current device based on the device’s app management mode and filtering configuration. From this listing, users open per-app **App Details** pages and, when allowed by policy, access **App Settings** via a settings entry point on the app card or within the App Details view.
+## Apps tab overview
 
-<Callout kind="info" collapsed="false">
-  This is a mobile-first web experience designed for managed iOS device users. The App Store listing leads into per-app App Details and App Settings views, which reuse the same app and device context.
+The Apps tab in the bottom navigation is the default home screen after login and shows the App Store listing for the current device. It lets users search, filter, and browse apps that are available on the device based on app management mode and filtering configuration.
+
+<Callout kind="info">
+  The Apps tab is part of the Shomri App on managed iOS devices. It reuses the same app and device context as App Details and App Settings, so navigation between these views does not re-resolve the device.
 </Callout>
-
-## Route
-
-- **Route:** `/:deviceId`
-
-- **File:** `Index.tsx`
 
 ## Purpose
 
-- Show a curated app catalog that adapts to the device’s configured mode.
+The Apps tab exists to give the device user a clear, policy-aware view of what they are allowed to install or use.
 
-- Support a hybrid listing strategy (paginated catalog + static whitelist) when applicable.
+- Surface a curated catalog of apps that respect device-level app management and filtering rules.
 
-## Display modes
+- Separate apps that are always allowed (whitelisted) from the broader catalog governed by category filters.
+
+- Provide a consistent entry point into App Details and App Settings flows for each app.
+
+## Layout and key features
+
+The Apps screen has a simple, mobile-first layout that focuses on discovery and quick access.
+
+### Header and context
+
+- **Top bar** — Shows the current tab label (Apps) and may include the active device name or avatar.
+
+- **Bottom navigation** — Shows three main tabs: Support, Apps, and Settings. Apps is selected by default after login.
+
+### Search
+
+A search bar at the top of the content area lets users quickly find apps by name.
+
+- **Scope** — Search applies across both Whitelisted Apps and All Other Apps sections, constrained by the device’s filtering policy.
+
+- **Behavior** — As the user types, filter the visible lists to matching apps. If no apps match, show a clear empty state.
+
+### Category filter dropdown
+
+A category filter control helps users narrow the list by app category.
+
+- **Control** — A dropdown or segmented control near the search bar.
+
+- **Options** — Categories pulled from the app catalog (for example, Learning, Communication, Games), plus an All option.
+
+- **Interaction** — When the user changes the category, refresh the All Other Apps section to show only apps in that category while keeping Whitelisted Apps visible.
+
+<Callout kind="tip">
+  Keep the search query and category filter in sync across both sections. Users expect a single set of filters to shape the entire Apps page.
+</Callout>
+
+### Listing sections
+
+The main content area shows two sections in a single scrollable view.
+
+#### Whitelisted Apps section
+
+Whitelisted Apps are always available to the device, regardless of the current category filter.
+
+- **Location** — Appears at the top of the list, under the search and category filter controls.
+
+- **Content** — Cards for apps that are explicitly allowed by policy for this device.
+
+- **State** — If no apps are whitelisted, hide this section or show a short “No whitelisted apps yet” message.
+
+Each whitelisted app card typically shows:
+
+- App icon and name.
+
+- Category label.
+
+- Current status on the device (for example, Installed, Available).
+
+- Optional settings badge or icon that links to App Settings when policy allows.
+
+#### All Other Apps section
+
+All Other Apps shows the remainder of the catalog that is available to the device based on category and filtering policies.
+
+- **Location** — Appears below Whitelisted Apps, in the same scroll.
+
+- **Content** — A paginated or infinite-scroll list of app cards that match the current search and category filters.
+
+- **State** — If filters result in no matches, show an empty state for this section while keeping Whitelisted Apps visible if any exist.
+
+App cards in this section use the same basic layout as Whitelisted Apps but may reflect different states (for example, Request Access instead of Install for mentee devices).
+
+## User flow and actions
+
+Users rely on the Apps tab primarily to discover apps and drill into details. The high-level flow is consistent across app management modes.
+
+<Steps>
+
+  <Step title="Search or browse available apps" icon="search">
+
+  From the Apps tab, the user scrolls through Whitelisted Apps and All Other Apps or uses the search bar and category filter. Both sections update based on the same search text and selected category, constrained by the device’s app policy.
+
+  </Step>
+
+  <Step title="Review app card details" icon="info">
+
+  For any app, the user reviews the card information, such as icon, name, category, and current status. When available, a small settings icon or badge on the card indicates that per-app settings exist for this device.
+
+  </Step>
+
+  <Step title="Open App Details" icon="arrow-right">
+
+  The user taps an app card to open the App Details screen. App Details shows full metadata (description, screenshots) and provides the primary action to download or request the app from the Apple App Store, plus entry points to App Settings when allowed.
+
+  </Step>
+
+</Steps>
+
+After completing actions in App Details or App Settings, the user returns to the Apps tab (for example, via back navigation) and sees the same filtered listing, keeping their search and category context intact.
+
+## Implementation details
+
+The sections below describe how to implement the Apps tab behavior, including display modes, App Details, and App Settings for different device types.
+
+### Route
+
+- **Route:** `/:deviceId`
+
+- **File:** `Index.tsx` for the Apps tab content area.
+
+<Callout kind="info">
+  The Apps tab replaces the earlier single-route App Store page but uses the same underlying queries and merge logic. Keep device context handling consistent with other tabs such as Browser.
+</Callout>
+
+### Display modes
 
 The page supports three display modes, determined by the device’s app configuration.
 
-### 1) Apps by Category (Browse Mode)
+#### 1) Apps by Category (Browse Mode)
 
 **What the user sees**
 
-- A **paginated** app catalog
+- A **paginated** app catalog in the All Other Apps section.
 
-- Apps filtered by the device’s **category settings**
+- Apps filtered by the device’s **category settings**.
 
 - A merged view that includes:
 
-  - Category-based catalog apps (paginated)
+  - Category-based catalog apps (paginated) in All Other Apps.
 
-  - Explicitly whitelisted apps (`static whitelist`)
+  - Explicitly whitelisted apps (static whitelist) in Whitelisted Apps.
 
 **Data sources**
 
-- Paginated allowed apps list (optionally searchable)
+- Paginated allowed apps list (optionally searchable).
 
-- Static whitelist list
+- Static whitelist list.
 
-- Device app configuration
+- Device app configuration.
 
-### 2) Approved Only (Whitelist Mode)
+#### 2) Approved Only (Whitelist Mode)
 
 **What the user sees**
 
-- Only apps that are **explicitly whitelisted**
+- Only apps that are **explicitly whitelisted**, in a single Whitelisted Apps section.
 
-- No paginated catalog
+- No paginated catalog and no All Other Apps section.
 
 **Data sources**
 
-- Static whitelist list
+- Static whitelist list.
 
-- Device app configuration
+- Device app configuration.
 
-### 3) Open Blocklist (Apple Mode)
+#### 3) Open Blocklist (Apple Mode)
 
 **What the user sees**
 
-- A list of **blocked apps only**
+- A list of **blocked apps only**, typically in an All Other Apps or separate Blocked Apps section.
 
-- A message indicating the rest are available directly in the Apple App Store
+- A message indicating that all other apps are available directly in the Apple App Store.
 
-- Users install everything else from the Apple App Store
+- Users install everything else from the Apple App Store.
 
 **Data sources**
 
-- Device app configuration (blocklist and mode)
+- Device app configuration (blocklist and mode).
 
 ## App Details
 
@@ -88,7 +194,7 @@ The App Details page mirrors an app store product page: it shows app metadata, d
 
 - Expose app-related configuration for a device, with different behaviors for mentee and child versus self-managed devices.
 
-The user opens App Details by selecting an app from the App Store listing. The App Settings entry point (settings button) is available from the app card and from within this view when device configuration allows per-app settings.
+The user opens App Details by selecting an app from the Apps tab listing. The App Settings entry point (settings button) is available from the app card and from within this view when device configuration allows per-app settings.
 
 ### What the user sees
 
@@ -102,7 +208,7 @@ The user opens App Details by selecting an app from the App Store listing. The A
 
 - A primary **Download from App Store** button.
 
-When the user clicks the download button, show an overlay that deep-links into the Apple App Store for the app.
+When the user taps the download button, show an overlay that deep-links into the Apple App Store for the app.
 
 ### Data source: Apple Lookup API
 
@@ -157,6 +263,7 @@ Treat the Apple Lookup API response as `metadata` for the UI. The exact Apple pa
 #### Example: Apple lookup call
 
 <CodeGroup show-lines="true" tabs={[]}>
+
   ```bash
   # Request: lookup app metadata by trackId
   curl "https://itunes.apple.com/lookup?id=871761612"
@@ -183,19 +290,20 @@ Treat the Apple Lookup API response as `metadata` for the UI. The exact Apple pa
     ]
   }
   ```
+
 </CodeGroup>
 
 Map this response into the `metadata` shape your UI expects.
 
-## App Settings — Mentee and child
+## App Settings — mentee and child
 
 The mentee and child App Settings view shows the current configuration for a device and lets the user request, but not apply, changes.
 
-<Callout kind="info" collapsed="false">
+<Callout kind="info">
   App Settings use the same underlying configuration API for both mentee and child and self-managed devices. The difference is how users change settings: mentees submit requests, while self-managed users update configuration directly.
 </Callout>
 
-<Callout kind="info" collapsed="false">
+<Callout kind="info">
   Mentees cannot change policy directly. When they tap a setting they do not have, open a modal to submit a change request. The request then flows through your approval process.
 </Callout>
 
@@ -230,6 +338,7 @@ Use `api.devices.apps.getConfig` to populate the App Settings view for a specifi
 #### Example: config fetch
 
 <CodeGroup show-lines="true" tabs={[]}>
+
   ```json
   {
     "method": "api.devices.apps.getConfig",
@@ -237,6 +346,7 @@ Use `api.devices.apps.getConfig` to populate the App Settings view for a specifi
       "deviceId": "dev_9f32b47c2a8f4f8a"
     }
   }
+
   ```
 
   ```json
@@ -252,6 +362,7 @@ Use `api.devices.apps.getConfig` to populate the App Settings view for a specifi
     ]
   }
   ```
+
 </CodeGroup>
 
 Render sections for AppMode, Categories, Whitelist, Blacklist, and Network Rules. For mentees, treat these sections as mostly read-only, with entry points into the request flow.
@@ -268,7 +379,7 @@ When a mentee interacts with a configuration they do not have, such as tapping a
 
 - On submit, call `request.create.appRequest`.
 
-<Callout kind="tip" collapsed="false">
+<Callout kind="tip">
   You will likely define additional request types for specific changes, such as network rules updates or mode changes. Keep the modal flexible to support multiple `type` and `target` values.
 </Callout>
 
@@ -303,6 +414,7 @@ When a mentee interacts with a configuration they do not have, such as tapping a
 #### Example: change request
 
 <CodeGroup show-lines="true" tabs={[]}>
+
   ```json
   {
     "method": "request.create.appRequest",
@@ -313,6 +425,7 @@ When a mentee interacts with a configuration they do not have, such as tapping a
       "reason": "I want to play with my friends on weekends."
     }
   }
+
   ```
 
   ```json
@@ -321,15 +434,16 @@ When a mentee interacts with a configuration they do not have, such as tapping a
     "status": "pending"
   }
   ```
+
 </CodeGroup>
 
 After a successful response, close the modal and show a confirmation state indicating that the request is awaiting approval.
 
-## [App Settings — Self-managed](/eli-docs/frontend/useDeviceAllowedApps)
+## App Settings — self-managed
 
 Self-managed users see the same configuration sections, AppMode, Categories, Whitelist, Blacklist, and Network Rules, but can update settings directly without approval workflows.
 
-<Callout kind="info" collapsed="false">
+<Callout kind="info">
   Self-managed flows call the same `api.devices.apps.getConfig` for reads but use direct update APIs for writes. Avoid reusing the mentee request modal; instead, apply changes immediately and surface any errors inline.
 </Callout>
 
@@ -384,6 +498,7 @@ Use `Devices.apps.update` to change app-related settings on a device.
 #### Example: update allowed and blocked apps
 
 <CodeGroup show-lines="true" tabs={[]}>
+
   ```json
   {
     "method": "Devices.apps.update",
@@ -402,6 +517,7 @@ Use `Devices.apps.update` to change app-related settings on a device.
       ]
     }
   }
+
   ```
 
   ```json
@@ -413,11 +529,12 @@ Use `Devices.apps.update` to change app-related settings on a device.
       "com.duolingo.DuolingoMobile",
       "com.google.Chrome"
     ],
-    "blockedApps": [
+      "blockedApps": [
       "com.supercell.clashofclans"
     ]
   }
   ```
+
 </CodeGroup>
 
 ### Direct updates: network rules
@@ -437,6 +554,7 @@ Use `Devices.restrictions.update` to change network-related policies, such as do
 #### Example: update network rules
 
 <CodeGroup show-lines="true" tabs={[]}>
+
   ```json
   {
     "method": "Devices.restrictions.update",
@@ -465,6 +583,7 @@ Use `Devices.restrictions.update` to change network-related policies, such as do
     }
   }
   ```
+
 </CodeGroup>
 
 Apply optimistic UI updates where appropriate, but always reconcile with the API response or a follow-up `api.devices.apps.getConfig` call to keep the App Settings page in sync.
@@ -511,9 +630,8 @@ When in Apps by Category mode, use a merged list to combine paginated catalog ap
 
 ## Notes for implementers
 
-- The mode is device-specific, so resolve the active device context before rendering this page.
+- The mode is device-specific, so resolve the active device context before rendering the Apps tab.
 
 - Keep pagination behavior stable. The dedupe and merge logic must not cause the list to jump or reorder unexpectedly as the user scrolls.
 
-- Reuse the same app and device context as the user moves between the App Store listing, App Details, and App Settings to avoid redundant fetches and inconsistent state.
-
+- Reuse the same app and device context as the user moves between the Apps listing, App Details, and App Settings to avoid redundant fetches and inconsistent state.
